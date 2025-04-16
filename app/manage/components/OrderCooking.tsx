@@ -1,120 +1,27 @@
+import { fetchOrdersInCooking } from "@/app/api/fetchForManagerAPI";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { LuCookingPot } from "react-icons/lu";
 
-const data = [
-  [
-    {
-      orderId: 9,
-      menuName: "순두부찌개",
-      quantity: 2,
-      totalPrice: 17000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 1,
-      groupNum: "EEE7391C",
-    },
-    {
-      orderId: 9,
-      menuName: "소주",
-      quantity: 2,
-      totalPrice: 12000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 1,
-      groupNum: "EEE7391C",
-    },
-  ],
-  [
-    {
-      orderId: 10,
-      menuName: "까만찜닭",
-      quantity: 1,
-      totalPrice: 17000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-    {
-      orderId: 10,
-      menuName: "소주",
-      quantity: 2,
-      totalPrice: 12000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-  ],
-  [
-    {
-      orderId: 11,
-      menuName: "까만찜닭",
-      quantity: 1,
-      totalPrice: 17000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-    {
-      orderId: 11,
-      menuName: "소주",
-      quantity: 2,
-      totalPrice: 12000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-  ],
-  [
-    {
-      orderId: 12,
-      menuName: "까만찜닭",
-      quantity: 1,
-      totalPrice: 17000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-    {
-      orderId: 12,
-      menuName: "소주",
-      quantity: 2,
-      totalPrice: 12000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-  ],
-  [
-    {
-      orderId: 13,
-      menuName: "까만찜닭",
-      quantity: 1,
-      totalPrice: 17000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-    {
-      orderId: 13,
-      menuName: "소주",
-      quantity: 2,
-      totalPrice: 12000,
-      orderTime: "2025-04-11T14:04:33.212405",
-      status: "REQUESTED",
-      tableId: 2,
-      groupNum: "EEE7391C",
-    },
-  ],
-];
+type OrderItem = {
+  orderId: number;
+  menuName: string;
+  quantity: number;
+  totalPrice: number;
+  orderTime: string;
+  status: string;
+  tableId: number;
+  groupNum: string;
+};
 
 export default function OrderCooking() {
+  // eslint-disable-next-line
+  const { data, isLoading, isError } = useQuery<OrderItem[][]>({
+    queryKey: ["orders", "in-cooking"],
+    queryFn: fetchOrdersInCooking,
+    refetchInterval: 10000, // 🔁 10초마다 요청
+  });
+
   return (
     <div className="h-[90vh] w-[32%] border-2 border-[#f0f0f0] rounded-[10px] p-4">
       <div className="flex flex-col gap-2">
@@ -132,7 +39,7 @@ export default function OrderCooking() {
         </span>
       </div>
       <div className="flex flex-col gap-4 mt-4 h-[90%] overflow-auto">
-        {data.map((orderGroup) => (
+        {data?.map((orderGroup) => (
           <div
             key={orderGroup[0].orderId}
             className="border border-[#f0f0f0] rounded-[10px] p-4 text-sm text-[#2a2a2a]"

@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { FaArrowLeft, FaMinus, FaPlus } from "react-icons/fa6";
 import { useCartStore } from "@/store/cartStore";
 import Image from "next/image";
 import { FaRegTrashAlt } from "react-icons/fa";
+import { createOrders } from "@/app/api/fetchOrderAPI";
+import { useSearchParams } from "next/navigation";
 
 type CartProps = {
   setIsBottomSheet: (value: boolean) => void;
@@ -16,6 +18,10 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
   const cartCount = useCartStore((state) => state.items.length);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const [showModal, setShowModal] = useState(false);
+  const searchParams = useSearchParams();
+  const tableId = searchParams.get("tableId");
+  const token = searchParams.get("token");
 
   return (
     <div>
@@ -129,14 +135,7 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
                 </span>
               </div>
               <button
-                onClick={() => {
-                  const isConfirmed = confirm("정말 주문하시겠어요?");
-                  if (isConfirmed) {
-                    useCartStore.getState().clearCart();
-                    alert("주문이 완료되었습니다. 감사합니다!");
-                    setIsBottomSheet(false);
-                  }
-                }}
+                onClick={() => setShowModal(true)}
                 className="mt-2 bg-[#35CAF4] text-white text-[16px] w-[50%] py-3 rounded-[10px] font-bold flex items-center justify-center gap-1"
               >
                 <span>주문하기</span>
@@ -148,6 +147,53 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
           </>
         )}
       </div>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[80%] max-w-[360px] shadow-xl text-center">
+            <p className="text-[#2a2a2a] text-base font-semibold mb-4">
+              정말 주문하시겠어요?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-4 py-2 rounded bg-[#35CAF4] text-white font-bold"
+                onClick={async () => {
+                  try {
+                    const orderData = {
+                      tableId: 1, // 👉 QR로 받은 tableId 값으로 교체 필요
+                      orders: items.map((item) => ({
+                        menuId: item.menuId,
+                        quantity: item.quantity,
+                      })),
+                    };
+
+                    if (!token || !tableId) {
+                      alert("유효하지 않은 접근입니다.");
+                      return;
+                    }
+
+                    await createOrders(orderData, token, tableId); // 🔹 주문 요청
+                    useCartStore.getState().clearCart(); // 장바구니 비우기
+                    setIsBottomSheet(false);
+                    setShowModal(false);
+                    alert("주문이 완료되었습니다. 감사합니다!");
+                  } catch (error) {
+                    console.error("주문 실패:", error);
+                    alert("주문 처리 중 문제가 발생했습니다.");
+                  }
+                }}
+              >
+                확인
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-[#333]"
+                onClick={() => setShowModal(false)}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
