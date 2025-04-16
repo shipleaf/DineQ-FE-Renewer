@@ -10,13 +10,20 @@ type OrderRequest = {
   }[];
 };
 
-export const createOrders = async (orderData: OrderRequest) => {
+export const createOrders = async (
+  orderData: OrderRequest,
+  token: string,
+  tableId: string
+) => {
   const response = await axios.post(`${apiUrl}/api/v1/orders`, orderData, {
     withCredentials: true,
     headers: {
       "Content-Type": "application/json",
+      token,
+      tableId,
     },
   });
+
   return response.data;
 };
 
