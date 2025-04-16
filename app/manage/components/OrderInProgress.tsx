@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchOrdersInProgress } from "@/app/api/fetchForManagerAPI";
+import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { FaRegClock } from "react-icons/fa";
 import { GoKebabHorizontal } from "react-icons/go";
@@ -16,92 +18,15 @@ type OrderItem = {
 };
 
 export default function OrderInProgress() {
-  const orders: OrderItem[][] = [
-    [
-      {
-        orderId: 9,
-        menuName: "순두부찌개",
-        quantity: 2,
-        totalPrice: 17000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 9,
-        menuName: "순",
-        quantity: 2,
-        totalPrice: 17000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 9,
-        menuName: "두",
-        quantity: 2,
-        totalPrice: 17000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 9,
-        menuName: "부",
-        quantity: 2,
-        totalPrice: 17000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 9,
-        menuName: "찌",
-        quantity: 2,
-        totalPrice: 17000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 9,
-        menuName: "소주",
-        quantity: 2,
-        totalPrice: 8000,
-        orderTime: "2025-04-11T14:04:33.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-    ],
-    [
-      {
-        orderId: 10,
-        menuName: "김치전",
-        quantity: 1,
-        totalPrice: 20000,
-        orderTime: "2025-04-11T14:04:34.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-      {
-        orderId: 10,
-        menuName: "소주",
-        quantity: 1,
-        totalPrice: 5000,
-        orderTime: "2025-04-11T14:04:34.212405",
-        status: "REQUESTED",
-        tableId: 1,
-        groupNum: "EEE7391C",
-      },
-    ],
-  ];
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["orders", "in-progress"],
+    queryFn: fetchOrdersInProgress,
+    refetchInterval: 10000, // 🔁 10초마다 요청
+  });
+
+  const orders: OrderItem[][] = data ?? [];
+
+  console.log(orders);
 
   const [modalData, setModalData] = useState<OrderItem[] | null>(null);
 
@@ -142,60 +67,63 @@ export default function OrderInProgress() {
 
         {/* 여러 주문 묶음 리스트 */}
         <div className="w-full px-2 flex flex-col gap-4 pb-4">
-          {orders.map((orderGroup) => (
-            <div
-              key={orderGroup[0].orderId}
-              onClick={() => setModalData(orderGroup)}
-              className="cursor-pointer border border-[#f0f0f0] rounded-[10px] p-4 text-sm font-[500] text-[#2a2a2a] flex-col items-center"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <div className="bg-[#D7F4F8] p-2 px-3 rounded-[10px]">
-                  <span className="text-[#093AEE] font-bold text-lg">
-                    {orderGroup[0].tableId}번
-                  </span>
+          {orders.map((orderGroup, index) => {
+            if (!orderGroup || orderGroup.length === 0) return null;
+
+            return (
+              <div
+                key={orderGroup[0].orderId ?? `group-${index}`}
+                onClick={() => setModalData(orderGroup)}
+                className="cursor-pointer border border-[#f0f0f0] rounded-[10px] p-4 text-sm font-[500] text-[#2a2a2a] flex-col items-center"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="bg-[#D7F4F8] p-2 px-3 rounded-[10px]">
+                    <span className="text-[#093AEE] font-bold text-lg">
+                      {orderGroup[0].tableId}번
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <span className="font-[500] text-[#a0a0a0] text-[12px]">
+                      {formatOrderTime(orderGroup[0].orderTime)}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("케밥 메뉴 클릭!");
+                      }}
+                      className="text-[20px] text-[#a0a0a0] cursor-pointer"
+                    >
+                      <GoKebabHorizontal />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <span className="font-[500] text-[#a0a0a0] text-[12px]">{formatOrderTime(orderGroup[0].orderTime)}</span>
+
+                {orderGroup.slice(0, 4).map((order) => (
+                  <div
+                    key={order.menuName}
+                    className="flex items-center justify-between"
+                  >
+                    <span>
+                      {order.menuName} × {order.quantity}개
+                    </span>
+                    <span>{order.totalPrice.toLocaleString()}원</span>
+                  </div>
+                ))}
+
+                {orderGroup.length > 4 && (
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // 모달 열림 방지
-                      console.log("케밥 메뉴 클릭!");
-                      // TODO: 케밥 버튼 로직 추가
+                      e.stopPropagation();
+                      setModalData(orderGroup);
                     }}
-                    className="text-[20px] text-[#a0a0a0] cursor-pointer"
+                    className="text-xs text-[#FC0176] underline self-end mr-2"
                   >
-                    <GoKebabHorizontal />
+                    +{orderGroup.length - 4}개 더보기
                   </button>
-                </div>
+                )}
               </div>
-
-              {/* 메뉴들 */}
-              {orderGroup.slice(0, 4).map((order) => (
-                <div
-                  key={order.menuName}
-                  className="flex items-center justify-between"
-                >
-                  <span>
-                    {order.menuName} × {order.quantity}개
-                  </span>
-                  <span>{order.totalPrice.toLocaleString()}원</span>
-                </div>
-              ))}
-
-              {/* +N개 더보기 */}
-              {orderGroup.length > 4 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // 모달 안 열고 더보기만 처리
-                    setModalData(orderGroup);
-                  }}
-                  className="text-xs text-[#FC0176] underline self-end mr-2"
-                >
-                  +{orderGroup.length - 4}개 더보기
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

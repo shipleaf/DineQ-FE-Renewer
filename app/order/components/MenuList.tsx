@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
 import { useQuery } from "@tanstack/react-query";
 
@@ -49,6 +49,9 @@ export default function MenuList() {
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const [activeCategory, setActiveCategory] = useState<number>(1);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tableId = searchParams.get("tableId");
+  const token = searchParams.get("token");
 
   const skipObserverRef = useRef(false);
 
@@ -206,7 +209,11 @@ export default function MenuList() {
                     {menus.map((menu) => (
                       <div
                         key={menu.menuId}
-                        onClick={() => router.push(`/order/${menu.menuId}`)}
+                        onClick={() =>
+                          router.push(
+                            `/order/${menu.menuId}?tableId=${tableId}&token=${token}`
+                          )
+                        }
                       >
                         <div className="p-6 bg-white flex justify-between items-start">
                           <div>
