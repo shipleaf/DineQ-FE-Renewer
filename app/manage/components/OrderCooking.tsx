@@ -15,6 +15,7 @@ type OrderItem = {
 };
 
 export default function OrderCooking() {
+  // eslint-disable-next-line
   const { data, isLoading, isError } = useQuery<OrderItem[][]>({
     queryKey: ["orders", "in-cooking"],
     queryFn: fetchOrdersInCooking,

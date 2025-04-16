@@ -18,6 +18,7 @@ type OrderItem = {
 };
 
 export default function OrderInProgress() {
+  // eslint-disable-next-line
   const { data, isLoading, isError } = useQuery({
     queryKey: ["orders", "in-progress"],
     queryFn: fetchOrdersInProgress,

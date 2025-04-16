@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+// import { useEffect, useState } from "react";
 import Image from "next/image";
-import { fetchToken } from "@/app/api/fetchToken"; // 경로는 실제 위치에 맞게 수정
+// import { fetchToken } from "@/app/api/fetchToken"; // 경로는 실제 위치에 맞게 수정
 
 export default function Header() {
-  const [token, setToken] = useState<string | null>(null);
+  // const [token, setToken] = useState<string | null>(null);
 
   // useEffect(() => {
   //   const getToken = async () => {
@@ -42,9 +43,9 @@ export default function Header() {
       </div>
       <div className="bg-[#F0F0F0] h-3"></div>
 
-      {token && (
+      {/* {token && (
         <div className="p-4 text-sm text-[#555]">토큰: {token}</div>
-      )}
+      )} */}
     </div>
   );
 }
