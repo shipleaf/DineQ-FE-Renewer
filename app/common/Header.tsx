@@ -2,10 +2,14 @@
 
 import React from "react";
 // import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-// import { fetchToken } from "@/app/api/fetchToken"; // 경로는 실제 위치에 맞게 수정
+// import { fetchToken } from "../api/fetchToken";
 
 export default function Header() {
+  const searchParams = useSearchParams();
+  const tableId = searchParams.get("tableId");
+
   // const [token, setToken] = useState<string | null>(null);
 
   // useEffect(() => {
@@ -38,14 +42,10 @@ export default function Header() {
         </div>
         <div className="bg-[#D7F4F8] rounded-[10px] flex flex-col items-center text-[#093AEE] font-[700] px-4 py-3 leading-none gap-1 h-full">
           <span className="text-[14px]">테이블</span>
-          <span className="text-[20px]">1번</span>
+          <span className="text-[20px]">{tableId}번</span>
         </div>
       </div>
       <div className="bg-[#F0F0F0] h-3"></div>
-
-      {/* {token && (
-        <div className="p-4 text-sm text-[#555]">토큰: {token}</div>
-      )} */}
     </div>
   );
 }
