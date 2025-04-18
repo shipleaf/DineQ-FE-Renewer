@@ -5,6 +5,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 type Menu = {
   categoryId: number;
@@ -34,8 +37,6 @@ export default function MenuList() {
     return () => clearTimeout(timer);
   }, []);
 
-  const isStillLoading = isLoading || showSkeleton;
-
   const Menu: Menu[] = data ?? [];
 
   const Category = Menu.reduce((acc: Record<string, number>, cur) => {
@@ -54,6 +55,55 @@ export default function MenuList() {
   const token = searchParams.get("token");
 
   const skipObserverRef = useRef(false);
+
+  const [isValidToken, setIsValidToken] = useState<boolean | null>(false);
+
+  useEffect(() => {
+    if (!token || !tableId) {
+      router.replace("/order/expiration");
+      return;
+    }
+
+    const validateToken = async () => {
+      try {
+        const res = await axios.post(
+          `${apiUrl}/api/v1/orders`,
+          {
+            tableId: Number(tableId), // body에 tableId 포함
+          },
+          {
+            withCredentials: true,
+            headers: {
+              token: token,
+              tableid: String(tableId), // Header는 문자열로 넣는 게 안전
+            },
+          }
+        );
+
+        if (res.status === 200) {
+          setIsValidToken(true);
+        }
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response) {
+          const status = error.response?.status;
+
+          switch (status) {
+            case 501:
+              setIsValidToken(true);
+              break;
+
+            default:
+              router.replace("/order/error");
+              break;
+          }
+        } else {
+          console.error("Unexpected error", error);
+        }
+      }
+    };
+
+    validateToken();
+  }, [token, tableId, router]);
 
   const scrollToCategory = (categoryId: number) => {
     const targetElement = categoryRefs.current[categoryId];
@@ -118,6 +168,10 @@ export default function MenuList() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [activeCategory]);
+
+  const isStillLoading = isLoading || showSkeleton || !isValidToken;
+
+  // const isStillLoading = isLoading || showSkeleton;
 
   return (
     <div>
