@@ -13,6 +13,7 @@ export default function Page() {
     <div className="flex flex-col">
       <Header />
       <div className="flex items-center justify-center gap-4">
+      {/* <div className="grid items-center justify-center gap-4"> */}
         {showInProgress && <OrderInProgress />}
         {showCooking && <OrderCooking />}
         {showReady && <OrderReady />}
