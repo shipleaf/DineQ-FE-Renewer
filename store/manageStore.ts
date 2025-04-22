@@ -7,6 +7,11 @@ type OrderFilterState = {
   toggleFilter: (key: 'showInProgress' | 'showCooking' | 'showReady') => void;
 };
 
+type OrderStatusState = {
+  cookingUpdated: boolean;
+  setCookingUpdated: (value: boolean) => void;
+};
+
 export const useOrderFilterStore = create<OrderFilterState>((set) => ({
   showInProgress: true,
   showCooking: true,
@@ -15,4 +20,9 @@ export const useOrderFilterStore = create<OrderFilterState>((set) => ({
     set((state) => ({
       [key]: !state[key],
     })),
+}));
+
+export const useOrderStatusStore = create<OrderStatusState>((set) => ({
+  cookingUpdated: false,
+  setCookingUpdated: (value) => set({ cookingUpdated: value }),
 }));
