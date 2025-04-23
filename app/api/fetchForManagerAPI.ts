@@ -170,6 +170,7 @@ export async function submitMenuUpdate(
   const res = await fetch(`${apiUrl}/api/v1/store/menus/${menuId}`, {
     method: "PUT",
     body: formData,
+    credentials: "include", // ✅ withCredentials: true에 해당
   });
 
   if (!res.ok) throw new Error("업데이트 실패");
