@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  createNewCategory,
   fetchCatergories,
   submitCategorySort,
   submitNewMenu,
+  updateMenuPriority,
 } from "@/app/api/fetchForManagerAPI";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,6 +16,7 @@ import {
   IoIosArrowDropupCircle,
 } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
+import { useRouter } from "next/navigation";
 
 type Category = {
   categoryId: number;
@@ -31,7 +34,17 @@ type ModalType =
 
 // const defaultPreviewImage = "/DineQLogo.png";
 
+type Menu = {
+  menuId: number;
+  menuName: string;
+  menuPriority: number;
+  categoryId: number;
+};
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 export default function MenuHeader() {
+  const router = useRouter();
   const [showLogoutBox, setShowLogoutBox] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>("none");
@@ -44,6 +57,30 @@ export default function MenuHeader() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [menuSortCategoryId, setMenuSortCategoryId] = useState<number | "">("");
+  const [menuList, setMenuList] = useState<Menu[]>([]);
+  const [showConfirmSortModal, setShowConfirmSortModal] = useState(false);
+  const [showSuccessSortModal, setShowSuccessSortModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDesc, setNewCategoryDesc] = useState("");
+  const [showConfirmCategoryModal, setShowConfirmCategoryModal] =
+    useState(false);
+
+  function moveMenuItem(index: number, direction: "up" | "down") {
+    setMenuList((prev) => {
+      const newArr = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
+      [newArr[index], newArr[targetIndex]] = [
+        newArr[targetIndex],
+        newArr[index],
+      ];
+      return newArr.map((item, idx) => ({
+        ...item,
+        menuPriority: idx + 1,
+      }));
+    });
+  }
 
   useEffect(() => {
     if (activeModal === "category-sort" || "menu-add") {
@@ -121,11 +158,38 @@ export default function MenuHeader() {
     }
   };
 
+  const handleSubmitMenuSort = async () => {
+    const payload = {
+      priorities: menuList.map((menu, index) => ({
+        menuId: menu.menuId,
+        menuPriority: index + 1,
+      })),
+    };
+
+    try {
+      await updateMenuPriority(payload);
+      setShowConfirmSortModal(false);
+      setShowSuccessSortModal(true);
+    } catch (err) {
+      console.error("메뉴 정렬 저장 실패", err);
+      alert("정렬 저장 실패");
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-5 items-center justify-between p-4 relative">
-        <div className="flex items-center gap-2">
-          <button className="p-1" onClick={() => setShowSidebar(true)}>
+        <div
+          className="flex items-center gap-2"
+          onClick={() => router.push("/manage")}
+        >
+          <button
+            className="p-1"
+            onClick={(e) => {
+              setShowSidebar(true);
+              e.stopPropagation();
+            }}
+          >
             <FiMenu size={24} />
           </button>
           <Image src="/image.png" alt="" width={48} height={24} />
@@ -149,7 +213,6 @@ export default function MenuHeader() {
           </div>
         </div>
       </div>
-
       {/* Sidebar */}
       {showSidebar && (
         <div
@@ -209,7 +272,6 @@ export default function MenuHeader() {
           </button>
         </div>
       </div>
-
       {/* ✅ Category Sort Modal */}
       {activeModal === "category-sort" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
@@ -370,7 +432,6 @@ export default function MenuHeader() {
           </div>
         </div>
       )}
-
       {showErrorModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-[300px] shadow-2xl text-center">
@@ -382,6 +443,212 @@ export default function MenuHeader() {
             >
               확인
             </button>
+          </div>
+        </div>
+      )}
+      {activeModal === "menu-sort" && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl min-w-[60vw] max-h-[80vh] overflow-y-auto shadow-lg space-y-4">
+            <h2 className="text-lg font-bold text-center">메뉴 정렬</h2>
+            <div>
+              <label className="block mb-1 text-sm font-semibold">
+                카테고리 선택
+              </label>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={menuSortCategoryId}
+                onChange={async (e) => {
+                  const categoryId = Number(e.target.value);
+                  setMenuSortCategoryId(categoryId);
+
+                  try {
+                    const res = await fetch(`${apiUrl}/api/v1/store/menus`, {
+                      credentials: "include",
+                    });
+                    const data = await res.json();
+                    const filtered = data
+                      .filter((menu: Menu) => menu.categoryId === categoryId)
+                      .sort(
+                        (a: Menu, b: Menu) => a.menuPriority - b.menuPriority
+                      );
+                    setMenuList(filtered);
+                  } catch (err) {
+                    console.error("메뉴 불러오기 실패", err);
+                  }
+                }}
+              >
+                <option value="">카테고리 선택</option>
+                {categories.map((cat) => (
+                  <option key={cat.categoryId} value={cat.categoryId}>
+                    {cat.categoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {menuList.map((menu, i) => (
+                <div
+                  key={menu.menuId}
+                  className="flex items-center justify-between py-2 border-b"
+                >
+                  <span>{menu.menuName}</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => moveMenuItem(i, "up")}>
+                      {" "}
+                      <IoIosArrowDropupCircle size={24} color="#c0c0c0" />{" "}
+                    </button>
+                    <button onClick={() => moveMenuItem(i, "down")}>
+                      {" "}
+                      <IoIosArrowDropdownCircle
+                        size={24}
+                        color="#c0c0c0"
+                      />{" "}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="bg-gray-200 px-4 py-2 rounded"
+                onClick={() => setActiveModal("none")}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={() => setShowConfirmSortModal(true)}
+              >
+                수정 완료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ✅ 확인 모달 */}
+      {showConfirmSortModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[320px] shadow-xl text-center">
+            <p className="text-[#2a2a2a] font-bold mb-2">정렬 확인</p>
+            <p className="text-sm text-[#666]">정말 이대로 저장할까요?</p>
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded text-[#333]"
+                onClick={() => setShowConfirmSortModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 px-4 py-2 rounded text-white"
+                onClick={handleSubmitMenuSort}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ✅ 완료 모달 */}
+      {showSuccessSortModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[320px] shadow-xl text-center">
+            <p className="text-green-600 font-bold mb-2">
+              정렬이 저장되었습니다.
+            </p>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md w-full"
+              onClick={() => {
+                setShowSuccessSortModal(false);
+                setActiveModal("none");
+                location.reload(); // ✅ 페이지 새로고침
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}{" "}
+      {activeModal === "category-add" && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[360px] shadow-2xl space-y-4">
+            <h2 className="text-lg font-bold text-center">카테고리 추가</h2>
+            <div>
+              <label className="text-sm font-semibold">카테고리 이름</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2 mt-1"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold">카테고리 설명</label>
+              <textarea
+                className="w-full border rounded px-3 py-2 mt-1 resize-none h-[80px]"
+                value={newCategoryDesc}
+                onChange={(e) => setNewCategoryDesc(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-gray-200 px-4 py-2 rounded"
+                onClick={() => setActiveModal("none")}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  if (!newCategoryName) {
+                    alert("카테고리명을 입력해주세요.");
+                    return;
+                  }
+                  setShowConfirmCategoryModal(true);
+                }}
+              >
+                추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showConfirmCategoryModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[320px] shadow-xl text-center">
+            <p className="text-[#2a2a2a] font-bold mb-2">카테고리 추가</p>
+            <p className="text-sm text-[#666]">정말 이대로 추가할까요?</p>
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded text-[#333]"
+                onClick={() => setShowConfirmCategoryModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 px-4 py-2 rounded text-white"
+                onClick={async () => {
+                  try {
+                    await createNewCategory({
+                      categoryName: newCategoryName,
+                      categoryDesc: newCategoryDesc,
+                    });
+
+                    setShowConfirmCategoryModal(false);
+                    setActiveModal("none");
+                    setNewCategoryName("");
+                    setNewCategoryDesc("");
+                    location.reload();
+                  } catch (err) {
+                    console.error("카테고리 추가 실패", err);
+                    alert("추가 실패");
+                  }
+                }}
+              >
+                확인
+              </button>
+            </div>
           </div>
         </div>
       )}
