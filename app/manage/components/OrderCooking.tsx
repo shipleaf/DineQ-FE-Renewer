@@ -105,7 +105,7 @@ export default function OrderCooking() {
             주문을 취소하시려면 삭제 버튼을 눌러주세요
           </span>
         </div>
-        <div className="flex flex-col gap-4 mt-4 h-[90%] overflow-auto scrollbar-hide">
+        <div className="flex flex-col gap-4 mt-4 h-[90%] overflow-auto scrollbar-always">
           {data?.map((orderGroup: OrderItem[]) => (
             <div
               key={orderGroup[0].orderId}

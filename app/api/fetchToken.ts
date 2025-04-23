@@ -8,3 +8,4 @@ export const fetchToken = async () => {
   });
   return response;
 };
+
