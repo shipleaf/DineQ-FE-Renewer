@@ -69,10 +69,10 @@ export default function OrderCooking() {
             <span className="font-[700] text-[#2a2a2a] text-sm">조리완료</span>
           </div>
           <span className="font-[500] text-[#808080] text-[10px]">
-            주문을 취소하시려면 삭제 버튼을 눌러주세요
+            조리완료된 주문내역입니다
           </span>
         </div>
-        <div className="flex flex-col gap-4 mt-4 h-[90%] overflow-auto scrollbar-hide">
+        <div className="flex flex-col gap-4 mt-4 h-[90%] overflow-auto scrollbar-always">
           {data?.map((orderGroup: OrderItem[]) => (
             <div
               key={orderGroup[0].orderId}

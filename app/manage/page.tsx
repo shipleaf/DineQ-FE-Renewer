@@ -10,7 +10,7 @@ export default function Page() {
   const { showInProgress, showCooking, showReady } = useOrderFilterStore();
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-hidden">
       <Header />
       <div className="flex items-center justify-center gap-4">
       {/* <div className="grid items-center justify-center gap-4"> */}

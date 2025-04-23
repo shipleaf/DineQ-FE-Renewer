@@ -1,9 +1,12 @@
+"use client";
+
 import { useOrderFilterStore } from "@/store/manageStore";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { BsGear } from "react-icons/bs";
 import { FaRegUserCircle } from "react-icons/fa";
 import { TbClipboardList } from "react-icons/tb";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { showInProgress, showCooking, showReady, toggleFilter } =
@@ -14,6 +17,9 @@ export default function Header() {
     { id: "cooking", label: "조리중", stateKey: "showCooking" },
     { id: "cooked", label: "조리완료", stateKey: "showReady" },
   ] as const;
+
+  const router = useRouter();
+  const [showLogoutBox, setShowLogoutBox] = useState(false);
 
   return (
     <div className="grid grid-cols-5 items-center justify-between p-4">
@@ -47,14 +53,28 @@ export default function Header() {
         ))}
       </div>
       <div className="flex items-center justify-end gap-3">
+        <button
+          className="text-md text-[#4E4868] font-[700] text-sm"
+          onClick={() => {router.push("/manage/menu")}}
+        >
+          메뉴관리
+        </button>
         <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
           <TbClipboardList size={24} color="#808080" />
         </div>
         <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
           <BsGear size={20} color="#808080" />
         </div>
-        <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
+        <div
+          className="relative rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
+          onClick={() => setShowLogoutBox(true)}
+        >
           <FaRegUserCircle size={22} color="#808080" />
+          {showLogoutBox && (
+            <div className="absolute z-[100] w-[100px] inset-0 top-[100%] right-[100%]">
+              <span>로그아웃</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

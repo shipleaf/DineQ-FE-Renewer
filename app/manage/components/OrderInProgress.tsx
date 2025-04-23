@@ -103,7 +103,7 @@ export default function OrderInProgress() {
         </div>
 
         {/* 여러 주문 묶음 리스트 */}
-        <div className="w-full px-2 flex flex-col gap-4 pb-4">
+        <div className="w-full px-2 flex flex-col gap-4 pb-4 h-[90%] overflow-auto scrollbar-always">
           {orders.map((orderGroup, index) => {
             if (!orderGroup || orderGroup.length === 0) return null;
 
@@ -121,7 +121,7 @@ export default function OrderInProgress() {
                   </div>
                   <div className="flex items-center gap-6">
                     <span className="text-xs text-gray-500">
-                      주문번호 #{orderGroup[0].orderId}
+                      주문번호 #{orderGroup[0].groupNum}
                     </span>
                     <div className="relative">
                       <button
