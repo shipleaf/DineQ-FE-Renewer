@@ -176,3 +176,46 @@ export async function submitMenuUpdate(
   if (!res.ok) throw new Error("업데이트 실패");
   return res.json();
 }
+
+export async function submitNewMenu(
+  menuData: {
+    menuName: string;
+    menuInfo: string;
+    menuPrice: number;
+    categoryId: number;
+    onSale: true;
+  },
+  imageFile?: File
+) {
+  const formData = new FormData();
+  formData.append("menu", JSON.stringify(menuData));
+  if (imageFile) formData.append("image", imageFile);
+
+  const res = await fetch(`${apiUrl}/api/v1/store/menus`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // withCredentials:true 대응
+  });
+
+  if (!res.ok) throw new Error("메뉴 등록 실패");
+  return res.json();
+}
+
+export const deleteMenu = async (menu_id: number) => {
+  const response = await axios.delete(
+    `${apiUrl}/api/v1/store/menus/${menu_id}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
+export const updateMenuStatus = async (menu_id: number, onSale: boolean) => {
+  const response = await axios.put(
+    `${apiUrl}/api/v1/store/menus/${menu_id}/available`,
+    { on_sale: onSale },
+    { withCredentials: true }
+  );
+  return response.data;
+};
