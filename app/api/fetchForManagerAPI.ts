@@ -168,7 +168,7 @@ export async function submitMenuUpdate(
   }
 
   const res = await fetch(`${apiUrl}/api/v1/store/menus/${menuId}`, {
-    method: "POST",
+    method: "PUT",
     body: formData,
   });
 
