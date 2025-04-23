@@ -16,6 +16,18 @@ export type updateMenuType = {
   menuImage: string;
 };
 
+export type MenuPriorityPayload = {
+  priorities: {
+    menuId: number;
+    menuPriority: number;
+  }[];
+};
+
+export type newCategoryType = {
+  categoryName: string;
+  categoryDesc: string;
+};
+
 export const fetchOrdersInProgress = async () => {
   const response = await axios.get(
     `${apiUrl}/api/v1/store/orders?status=requested`,
@@ -218,4 +230,57 @@ export const updateMenuStatus = async (menu_id: number, onSale: boolean) => {
     { withCredentials: true }
   );
   return response.data;
+};
+
+export const updateMenuPriority = async (payload: MenuPriorityPayload) => {
+  const response = await axios.put(
+    `${apiUrl}/api/v1/store/menus/sort`,
+    payload,
+    {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  return response.data;
+};
+
+export const createNewCategory = async (newCategory: newCategoryType) => {
+  const response = await axios.post(
+    `${apiUrl}/api/v1/store/categories`,
+    newCategory,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
+export const fetchTableOrders = async (table_id: number) => {
+  const response = await axios.get(`${apiUrl}/api/v1/orders/${table_id}`, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+export const payingTableOrders = async (table_id: number) => {
+  const response = await axios.get(`/api/v1/store/tables/${table_id}/clear`, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+export const addTable = async () => {
+  const res = await fetch(`${apiUrl}/api/v1/store/tables/add`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
+};
+
+export const deleteTable = async () => {
+  const res = await fetch(`${apiUrl}/api/v1/store/tables/delete`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
 };

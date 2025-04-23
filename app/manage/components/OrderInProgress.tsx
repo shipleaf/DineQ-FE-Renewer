@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 import { FaRegClock } from "react-icons/fa";
 import { GoKebabHorizontal } from "react-icons/go";
 
-type OrderItem = {
+export type OrderItem = {
   orderId: number;
   menuName: string;
   quantity: number;
