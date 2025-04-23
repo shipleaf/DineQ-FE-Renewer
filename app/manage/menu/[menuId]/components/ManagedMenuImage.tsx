@@ -5,7 +5,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMenuById } from "@/app/api/fetchMenuAPI";
-import { submitMenuUpdate } from "@/app/api/fetchForManagerAPI";
+import {
+  deleteMenu,
+  submitMenuUpdate,
+  updateMenuStatus,
+} from "@/app/api/fetchForManagerAPI";
 
 export default function ManagedMenuImage() {
   const { menuId } = useParams();
@@ -15,6 +19,15 @@ export default function ManagedMenuImage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    open: boolean;
+    success: boolean;
+    message: string;
+  }>({ open: false, success: true, message: "" });
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [onSale, setOnSale] = useState(true);
+  const [confirmStatusModal, setConfirmStatusModal] = useState(false);
 
   // 1. input ref 추가
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -54,6 +67,7 @@ export default function ManagedMenuImage() {
       setName(menu.menuName);
       setInfo(menu.menuInfo);
       setPrice(menu.menuPrice);
+      setOnSale(menu.onSale); // ✅ 초기 상태
     }
   }, [menu]);
 
@@ -63,9 +77,9 @@ export default function ManagedMenuImage() {
       name !== menu.menuName ||
       info !== menu.menuInfo ||
       price !== menu.menuPrice ||
-      selectedImage !== null; // ✅ 이미지 변경 체크 추가
+      selectedImage !== null; // ✅ onSale 조건 제거
     setHasChanged(changed);
-  }, [name, info, price, menu, selectedImage]); // ✅ selectedImage도 의존성에 추가
+  }, [name, info, price, selectedImage, menu]); // ✅ onSale도 의존성에서 제거
 
   const isStillLoading = isLoading || showSkeleton;
 
@@ -107,11 +121,32 @@ export default function ManagedMenuImage() {
 
       {/* ✏️ 수정 가능 영역 */}
       <div className="p-4 pt-6 pb-0 flex flex-col gap-4">
-        <input
-          className="text-[20px] font-semibold text-[#2a2a2a] border-b border-gray-300 py-1 outline-none"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="flex items-center justify-between border-b border-gray-300">
+          <input
+            className="text-[20px] font-semibold text-[#2a2a2a] py-1 outline-none"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <div className="flex items-center gap-4">
+            {/* ✅ 상태 토글 버튼 */}
+            <div
+              className={`flex items-center border rounded-full px-3 py-1 cursor-pointer text-sm font-medium ${
+                onSale
+                  ? "bg-blue-100 text-blue-700 border-blue-500"
+                  : "bg-red-100 text-red-600 border-red-500"
+              }`}
+              onClick={() => setConfirmStatusModal(true)}
+            >
+              {onSale ? "판매중" : "품절"}
+            </div>
+            <button
+              className="font-[700] text-[#ff0000]"
+              onClick={() => setDeleteModalOpen(true)}
+            >
+              메뉴삭제
+            </button>
+          </div>
+        </div>
         <textarea
           className="text-sm text-[#5E5E5E] border-b border-gray-300 py-1 outline-none resize-none h-[80px]"
           value={info}
@@ -191,6 +226,124 @@ export default function ManagedMenuImage() {
                 }}
               >
                 보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setDeleteModalOpen(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[320px] shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>정말 삭제하시겠습니까?</span>
+            <div>
+              <button></button>
+              <button></button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setDeleteModalOpen(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[320px] shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-[#2a2a2a] font-bold mb-2">
+              정말 삭제하시겠습니까?
+            </p>
+            <div className="flex justify-center gap-4 mt-4">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded text-[#333]"
+                onClick={() => setDeleteModalOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                className="bg-red-600 px-4 py-2 rounded text-white"
+                onClick={async () => {
+                  try {
+                    await deleteMenu(Number(menuId!));
+                    setDeleteModalOpen(false);
+                    setFeedbackModal({
+                      open: true,
+                      success: true,
+                      message: "메뉴가 삭제되었습니다.",
+                    });
+                  } catch (err) {
+                    console.error("삭제 실패", err);
+                    setFeedbackModal({
+                      open: true,
+                      success: false,
+                      message: "삭제 중 오류가 발생했습니다.",
+                    });
+                  }
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {feedbackModal.open && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[320px] shadow-2xl text-center">
+            <p
+              className={`font-bold mb-2 ${
+                feedbackModal.success ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {feedbackModal.message}
+            </p>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md w-full"
+              onClick={() => {
+                setFeedbackModal({ ...feedbackModal, open: false });
+                router.push("/manage/menu");
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+      {confirmStatusModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[300px] shadow-2xl text-center">
+            <p className="text-[#2a2a2a] font-bold mb-2">상태 변경</p>
+            <p className="text-sm text-[#666]">
+              정말 {onSale ? "품절 처리" : "판매중 전환"}하시겠습니까?
+            </p>
+            <div className="flex justify-center gap-4 mt-4">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded text-[#333]"
+                onClick={() => setConfirmStatusModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 px-4 py-2 rounded text-white"
+                onClick={async () => {
+                  try {
+                    await updateMenuStatus(Number(menuId), !onSale);
+                    setOnSale((prev) => !prev);
+                    setConfirmStatusModal(false);
+                  } catch (err) {
+                    console.error("상태 변경 실패", err);
+                    alert("상태 변경에 실패했습니다.");
+                  }
+                }}
+              >
+                확인
               </button>
             </div>
           </div>

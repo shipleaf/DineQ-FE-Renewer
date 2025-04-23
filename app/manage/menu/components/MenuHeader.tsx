@@ -1,18 +1,19 @@
 "use client";
 
 import {
-  CategoryPriorityPayload,
   fetchCatergories,
   submitCategorySort,
+  submitNewMenu,
 } from "@/app/api/fetchForManagerAPI";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BsGear } from "react-icons/bs";
 import { FaRegUserCircle } from "react-icons/fa";
-// import { useRouter } from "next/navigation";
-
-import { IoIosArrowDropdownCircle } from "react-icons/io";
-import { IoIosArrowDropupCircle } from "react-icons/io";
+import {
+  IoIosArrowDropdownCircle,
+  IoIosArrowDropupCircle,
+} from "react-icons/io";
+import { FiMenu } from "react-icons/fi";
 
 type Category = {
   categoryId: number;
@@ -21,35 +22,51 @@ type Category = {
   categoryPriority: number;
 };
 
-export default function MenuHeader() {
-  // const router = useRouter();
-  const [showLogoutBox, setShowLogoutBox] = useState(false);
+type ModalType =
+  | "none"
+  | "menu-add"
+  | "menu-sort"
+  | "category-add"
+  | "category-sort";
 
+// const defaultPreviewImage = "/DineQLogo.png";
+
+export default function MenuHeader() {
+  const [showLogoutBox, setShowLogoutBox] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [activeModal, setActiveModal] = useState<ModalType>("none");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | "">("");
+  const [menuName, setMenuName] = useState("");
+  const [menuInfo, setMenuInfo] = useState("");
+  const [menuPrice, setMenuPrice] = useState<number | "">("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await fetchCatergories();
-        const sorted = [...data].sort(
-          (a, b) => a.categoryPriority - b.categoryPriority
-        );
-        setCategories(sorted);
-      } catch (error) {
-        console.error("카테고리 불러오기 실패", error);
-      }
-    };
-    loadCategories();
-  }, []);
+    if (activeModal === "category-sort" || "menu-add") {
+      const loadCategories = async () => {
+        try {
+          const data = await fetchCatergories();
+          const sorted = [...data].sort(
+            (a, b) => a.categoryPriority - b.categoryPriority
+          );
+          setCategories(sorted);
+        } catch (error) {
+          console.error("카테고리 불러오기 실패", error);
+        }
+      };
+      loadCategories();
+    }
+  }, [activeModal]);
 
   function moveItem(index: number, direction: "up" | "down") {
     setCategories((prev) => {
       const newArr = [...prev];
       const targetIndex = direction === "up" ? index - 1 : index + 1;
       if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
-
-      // 스왑
       [newArr[index], newArr[targetIndex]] = [
         newArr[targetIndex],
         newArr[index],
@@ -62,53 +79,139 @@ export default function MenuHeader() {
   }
 
   const submitCategoryOrder = async () => {
-    const payload: CategoryPriorityPayload = {
+    const payload = {
       priorities: categories.map((c, index) => ({
         categoryId: c.categoryId,
         categoryPriority: index + 1,
       })),
     };
-
     try {
       await submitCategorySort(payload);
       alert("카테고리 정렬이 저장되었습니다.");
-      setShowCategoryModal(false);
+      setActiveModal("none");
     } catch (err) {
       console.error("정렬 저장 실패", err);
       alert("저장 실패");
     }
   };
 
+  const handleSubmitNewMenu = async () => {
+    if (!menuName || !menuPrice || !selectedCategoryId) {
+      setShowErrorModal(true);
+      return;
+    }
+
+    try {
+      await submitNewMenu(
+        {
+          menuName,
+          menuInfo,
+          menuPrice: Number(menuPrice),
+          categoryId: Number(selectedCategoryId),
+          onSale: true,
+        },
+        imageFile ?? undefined
+      );
+
+      alert("메뉴가 등록되었습니다.");
+      setActiveModal("none");
+    } catch (err) {
+      console.error(err);
+      alert("등록 실패");
+    }
+  };
+
   return (
-    <div className="grid grid-cols-5 items-center justify-between p-4">
-      <div className="flex items-center">
-        <Image src="/image.png" alt="" width={48} height={24} />
-        <span className="font-[700] text-[#4E4868] text-[24px]">DineQ</span>
+    <>
+      <div className="grid grid-cols-5 items-center justify-between p-4 relative">
+        <div className="flex items-center gap-2">
+          <button className="p-1" onClick={() => setShowSidebar(true)}>
+            <FiMenu size={24} />
+          </button>
+          <Image src="/image.png" alt="" width={48} height={24} />
+          <span className="font-bold text-[#4E4868] text-[24px]">DineQ</span>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 col-span-4">
+          <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
+            <BsGear size={20} color="#808080" />
+          </div>
+          <div
+            className="relative rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
+            onClick={() => setShowLogoutBox(true)}
+          >
+            <FaRegUserCircle size={22} color="#808080" />
+            {showLogoutBox && (
+              <div className="absolute z-[100] w-[100px] inset-0 top-[100%] right-[100%]">
+                <span>로그아웃</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex items-center justify-center gap-4 col-span-3 text-[#4E4868] font-[700] text-md"></div>
-      <div className="flex items-center justify-end gap-3">
+
+      {/* Sidebar */}
+      {showSidebar && (
         <div
-          className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
-          onClick={() => setShowCategoryModal(true)}
-        >
-          카테고리
+          className="fixed inset-0 z-40 bg-black/30"
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+      <div
+        className={`
+      fixed left-0 top-0 z-50 h-full w-[500px] bg-white shadow-lg p-6 space-y-4
+      transform transition-transform duration-300 ease-in-out
+      ${showSidebar ? "translate-x-0" : "-translate-x-full"}
+    `}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-start">
+          <h2 className="font-bold text-lg text-[#2a2a2a] mb-2">메뉴</h2>
+          <button
+            onClick={() => {
+              setActiveModal("menu-add");
+              setShowSidebar(false);
+            }}
+            className="text-[#808080]"
+          >
+            - 메뉴 추가
+          </button>
+          <button
+            onClick={() => {
+              setActiveModal("menu-sort");
+              setShowSidebar(false);
+            }}
+            className="text-[#808080]"
+          >
+            - 메뉴 정렬
+          </button>
         </div>
-        <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
-          <BsGear size={20} color="#808080" />
-        </div>
-        <div
-          className="relative rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
-          onClick={() => setShowLogoutBox(true)}
-        >
-          <FaRegUserCircle size={22} color="#808080" />
-          {showLogoutBox && (
-            <div className="absolute z-[100] w-[100px] inset-0 top-[100%] right-[100%]">
-              <span>로그아웃</span>
-            </div>
-          )}
+        <hr />
+        <div className="flex flex-col items-start">
+          <h2 className="font-bold text-lg text-[#2a2a2a] mb-2">카테고리</h2>
+          <button
+            onClick={() => {
+              setActiveModal("category-add");
+              setShowSidebar(false);
+            }}
+            className="text-[#808080]"
+          >
+            - 카테고리 추가
+          </button>
+          <button
+            onClick={() => {
+              setActiveModal("category-sort");
+              setShowSidebar(false);
+            }}
+            className="text-[#808080]"
+          >
+            - 카테고리 정렬
+          </button>
         </div>
       </div>
-      {showCategoryModal && (
+
+      {/* ✅ Category Sort Modal */}
+      {activeModal === "category-sort" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-[400px] max-h-[80vh] overflow-y-auto shadow-lg">
             <h2 className="text-lg font-bold mb-4 text-center">
@@ -135,7 +238,7 @@ export default function MenuHeader() {
             <div className="flex justify-end mt-4 gap-2">
               <button
                 className="bg-gray-200 px-4 py-2 rounded"
-                onClick={() => setShowCategoryModal(false)}
+                onClick={() => setActiveModal("none")}
               >
                 취소
               </button>
@@ -149,6 +252,139 @@ export default function MenuHeader() {
           </div>
         </div>
       )}
-    </div>
+      {activeModal === "menu-add" && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl min-w-[50%] min-h-[60vh] max-h-[90vh] overflow-y-auto shadow-lg space-y-4 relative">
+            <h2 className="text-lg font-bold text-center">메뉴 추가</h2>
+
+            <div>
+              <label className="block mb-1 text-sm font-bold">카테고리</label>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(Number(e.target.value))}
+              >
+                <option value="">카테고리 선택</option>
+                {categories.map((cat) => (
+                  <option key={cat.categoryId} value={cat.categoryId}>
+                    {cat.categoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-semibold">
+                메뉴 이름
+              </label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={menuName}
+                onChange={(e) => setMenuName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-semibold">
+                메뉴 설명
+              </label>
+              <textarea
+                className="w-full border rounded px-3 py-2 resize-none h-[80px]"
+                value={menuInfo}
+                onChange={(e) => setMenuInfo(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-semibold">가격</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                value={menuPrice}
+                onChange={(e) => setMenuPrice(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-semibold">사진</label>
+              <div className="flex items-center gap-4">
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  사진 업로드
+                </button>
+
+                {/* 미리보기 + 삭제 버튼 */}
+                {imageFile && previewImageUrl && (
+                  <div className="relative">
+                    <Image
+                      src={previewImageUrl}
+                      alt="미리보기"
+                      width={120}
+                      height={60}
+                      className="rounded object-cover"
+                    />
+                    <button
+                      onClick={() => {
+                        setImageFile(null);
+                        setPreviewImageUrl(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImageFile(file);
+                    setPreviewImageUrl(URL.createObjectURL(file));
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="bg-gray-200 px-4 py-2 rounded"
+                onClick={() => setActiveModal("none")}
+              >
+                취소
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleSubmitNewMenu}
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[300px] shadow-2xl text-center">
+            <p className="text-[#2a2a2a] font-bold mb-2">입력 오류</p>
+            <p className="text-sm text-[#666]">모든 필드를 입력해주세요.</p>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md w-full"
+              onClick={() => setShowErrorModal(false)}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
