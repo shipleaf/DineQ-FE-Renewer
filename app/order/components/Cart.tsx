@@ -163,7 +163,7 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
                   onClick={async () => {
                     try {
                       const orderData = {
-                        tableId: 1, // 👉 QR로 받은 tableId 값으로 교체 필요
+                        tableId: Number(tableId), // 👉 QR로 받은 tableId 값으로 교체 필요
                         orders: items.map((item) => ({
                           menuId: item.menuId,
                           quantity: item.quantity,
