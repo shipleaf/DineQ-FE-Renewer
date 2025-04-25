@@ -27,7 +27,11 @@ export default function Page() {
     ].filter(Boolean); // false인 항목 제거
   }, [showInProgress, showCooking, showReady]);
 
-  const gridColsClass = `grid-cols-${visibleComponents.length || 1}`;
+  const gridColsClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    3: "grid-cols-3",
+  }[visibleComponents.length] || "grid-cols-1";
 
   if (isLoading) {
     return (
@@ -40,8 +44,12 @@ export default function Page() {
   return (
     <div className="flex flex-col overflow-hidden">
       <Header />
-      <div className={`grid ${gridColsClass} gap-4 px-4`}>
-        {visibleComponents}
+      <div className={`grid ${gridColsClass} gap-4 px-4 w-full`}>
+        {visibleComponents.map((component, idx) => (
+          <div key={idx} className="min-w-0 w-full">
+            {component}
+          </div>
+        ))}
       </div>
     </div>
   );
