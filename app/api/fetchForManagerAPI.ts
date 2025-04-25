@@ -278,19 +278,19 @@ export const payingTableOrders = async (table_id: number) => {
 };
 
 export const addTable = async () => {
-  const res = await fetch(`${apiUrl}/api/v1/store/tables/add`, {
+  await fetch(`${apiUrl}/api/v1/store/tables/add`, {
     method: "POST",
     credentials: "include",
   });
-  return res.json();
+  return;
 };
 
 export const deleteTable = async () => {
-  const res = await fetch(`${apiUrl}/api/v1/store/tables/delete`, {
+  await fetch(`${apiUrl}/api/v1/store/tables/delete`, {
     method: "POST",
     credentials: "include",
   });
-  return res.json();
+  return;
 };
 
 export const getTableNumber = async () => {

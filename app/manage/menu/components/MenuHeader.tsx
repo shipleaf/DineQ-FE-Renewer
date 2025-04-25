@@ -18,7 +18,6 @@ import {
 import { FiMenu } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { logout } from "@/app/api/useLoginAPI";
-
 type Category = {
   categoryId: number;
   categoryName: string;
@@ -144,6 +143,7 @@ export default function MenuHeader() {
       await submitCategorySort(payload);
       alert("카테고리 정렬이 저장되었습니다.");
       setActiveModal("none");
+      location.reload()
     } catch (err) {
       console.error("정렬 저장 실패", err);
       alert("저장 실패");
@@ -170,6 +170,7 @@ export default function MenuHeader() {
 
       alert("메뉴가 등록되었습니다.");
       setActiveModal("none");
+      location.reload()
     } catch (err) {
       console.error(err);
       alert("등록 실패");
@@ -188,6 +189,7 @@ export default function MenuHeader() {
       await updateMenuPriority(payload);
       setShowConfirmSortModal(false);
       setShowSuccessSortModal(true);
+      location.reload()
     } catch (err) {
       console.error("메뉴 정렬 저장 실패", err);
       alert("정렬 저장 실패");
