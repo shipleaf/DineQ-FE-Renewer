@@ -31,9 +31,9 @@ export default function Header() {
   const { showInProgress, showCooking, showReady, toggleFilter } =
     useOrderFilterStore();
 
-    const setCookingUpdated = useOrderStatusStore(
-      (state) => state.setCookingUpdated
-    );
+  const setCookingUpdated = useOrderStatusStore(
+    (state) => state.setCookingUpdated
+  );
 
   const checkboxes = [
     { id: "before", label: "주문처리중", stateKey: "showInProgress" },
@@ -193,12 +193,16 @@ export default function Header() {
 
                     try {
                       const results = await Promise.all(
-                        selectedTableIds.map((id) => fetchTableOrders(id)) // 각 테이블의 주문 목록 (OrderItem[])
+                        selectedTableIds.map((id) =>
+                          fetchTableOrders(id).catch((err) => {
+                            if (err.response?.status === 404) return []; // 주문 없으면 빈 배열 반환
+                            throw err; // 다른 에러는 그대로 throw
+                          })
+                        )
                       );
-                      const merged = results.flat(); // OrderItem[][] → OrderItem[]
-                      console.log(merged);
+                      const merged = results.flat();
                       setTableOrders(merged);
-                      setIsTableSelectorOpen(false); // 자동 접힘
+                      setIsTableSelectorOpen(false);
                     } catch (err) {
                       console.error("여러 테이블 주문 조회 실패:", err);
                       alert("테이블 조회 실패");
@@ -291,7 +295,7 @@ export default function Header() {
                     setShowTableModal(false);
                     setSelectedTableIds([]);
                     setTableOrders([]);
-                    setIsTableSelectorOpen(true)
+                    setIsTableSelectorOpen(true);
                   }}
                 >
                   닫기
@@ -336,8 +340,8 @@ export default function Header() {
                     setShowConfirmPayModal(false);
                     setShowSuccessPayModal(true);
                     setShowTableModal(false);
-                    setCookingUpdated(true)
-                    setIsTableSelectorOpen(true)
+                    setCookingUpdated(true);
+                    setIsTableSelectorOpen(true);
                   } catch (err) {
                     console.error("정산 실패", err);
                     alert("정산 실패");

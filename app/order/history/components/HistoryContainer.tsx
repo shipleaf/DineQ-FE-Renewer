@@ -5,6 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchOrderHistory } from "@/app/api/fetchOrderAPI";
 import React from "react";
 
+type OrderItem = {
+  menuName: string;
+  quantity: number;
+  totalPrice: number;
+  menuPrice: number;
+  orderTime: string;
+  status: string;
+  categoryName: string;
+};
+
 export default function HistoryContainer() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
@@ -25,7 +35,7 @@ export default function HistoryContainer() {
 
   return (
     <div className="p-4 flex flex-col gap-6">
-      {data.map((group: any[], idx: number) => (
+      {data.map((group: OrderItem[], idx: number) => (
         <div
           key={idx}
           className="border border-gray-300 rounded-lg p-4 shadow-sm bg-white"
