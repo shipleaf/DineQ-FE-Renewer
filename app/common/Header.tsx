@@ -5,7 +5,7 @@ import React from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 // import { fetchToken } from "../api/fetchToken";
-
+// 
 export default function Header() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");

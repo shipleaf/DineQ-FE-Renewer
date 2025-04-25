@@ -268,6 +268,7 @@ export const fetchTableOrders = async (table_id: number) => {
 export const payingTableOrders = async (table_id: number) => {
   const response = await axios.post(
     `${apiUrl}/api/v1/store/tables/${table_id}/clear`,
+    {},
     {
       withCredentials: true,
     }

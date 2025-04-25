@@ -35,7 +35,7 @@ export default function FooterButton() {
         )}
       </button>
       <div
-        className={`fixed left-0 right-0 bottom-0 bg-white z-[100] h-[100vh] transition-transform duration-300 ease-in-out overflow-y-auto ${
+        className={`fixed left-0 right-0 bottom-0 bg-white z-[100] h-[100dvh] transition-transform duration-300 ease-in-out overflow-y-auto ${
           isBottomSheet ? "translate-y-0" : "translate-y-full"
         }`}
       >
