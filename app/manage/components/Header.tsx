@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrderFilterStore } from "@/store/manageStore";
+import { useOrderFilterStore, useOrderStatusStore } from "@/store/manageStore";
 import Image from "next/image";
 import React, { useState } from "react";
 import { BsGear } from "react-icons/bs";
@@ -30,6 +30,10 @@ type OrderItem = {
 export default function Header() {
   const { showInProgress, showCooking, showReady, toggleFilter } =
     useOrderFilterStore();
+
+    const setCookingUpdated = useOrderStatusStore(
+      (state) => state.setCookingUpdated
+    );
 
   const checkboxes = [
     { id: "before", label: "주문처리중", stateKey: "showInProgress" },
@@ -287,6 +291,7 @@ export default function Header() {
                     setShowTableModal(false);
                     setSelectedTableIds([]);
                     setTableOrders([]);
+                    setIsTableSelectorOpen(true)
                   }}
                 >
                   닫기
@@ -331,6 +336,8 @@ export default function Header() {
                     setShowConfirmPayModal(false);
                     setShowSuccessPayModal(true);
                     setShowTableModal(false);
+                    setCookingUpdated(true)
+                    setIsTableSelectorOpen(true)
                   } catch (err) {
                     console.error("정산 실패", err);
                     alert("정산 실패");
