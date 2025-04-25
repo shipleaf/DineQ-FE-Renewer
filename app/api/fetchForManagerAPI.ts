@@ -256,16 +256,22 @@ export const createNewCategory = async (newCategory: newCategoryType) => {
 };
 
 export const fetchTableOrders = async (table_id: number) => {
-  const response = await axios.get(`${apiUrl}/api/v1/orders/${table_id}`, {
-    withCredentials: true,
-  });
+  const response = await axios.get(
+    `${apiUrl}/api/v1/store/orders/${table_id}`,
+    {
+      withCredentials: true,
+    }
+  );
   return response.data;
 };
 
 export const payingTableOrders = async (table_id: number) => {
-  const response = await axios.get(`/api/v1/store/tables/${table_id}/clear`, {
-    withCredentials: true,
-  });
+  const response = await axios.post(
+    `${apiUrl}/api/v1/store/tables/${table_id}/clear`,
+    {
+      withCredentials: true,
+    }
+  );
   return response.data;
 };
 
@@ -283,4 +289,11 @@ export const deleteTable = async () => {
     credentials: "include",
   });
   return res.json();
+};
+
+export const getTableNumber = async () => {
+  const response = await axios.get(`${apiUrl}/api/v1/store/tables/count`, {
+    withCredentials: true,
+  });
+  return typeof response.data === "number" ? response.data : response.data.count;
 };
