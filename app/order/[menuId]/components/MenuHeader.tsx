@@ -9,7 +9,7 @@ export default function MenuHeader() {
   return (
     <div className="p-4">
       <button onClick={() => router.back()}>
-        <FaArrowLeft color="white" size={20} />
+        <FaArrowLeft color="#35CAF4" size={20} />
       </button>
     </div>
   );

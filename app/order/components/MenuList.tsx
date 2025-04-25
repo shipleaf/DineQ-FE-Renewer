@@ -93,7 +93,7 @@ export default function MenuList() {
               break;
 
             default:
-              router.replace("/order/error");
+              router.replace("/order/expiration");
               break;
           }
         } else {
