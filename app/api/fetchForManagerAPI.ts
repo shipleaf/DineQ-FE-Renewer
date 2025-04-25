@@ -1,4 +1,5 @@
 import axios from "axios";
+import { format } from "date-fns";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -296,5 +297,20 @@ export const getTableNumber = async () => {
   const response = await axios.get(`${apiUrl}/api/v1/store/tables/count`, {
     withCredentials: true,
   });
-  return typeof response.data === "number" ? response.data : response.data.count;
+  return typeof response.data === "number"
+    ? response.data
+    : response.data.count;
+};
+
+export const fetchSalesHistory = async (startDate: Date, endDate: Date) => {
+  const formattedStart = format(startDate, "yyyy-MM-dd");
+  const formattedEnd = format(endDate, "yyyy-MM-dd");
+
+  const response = await axios.get(
+    `${apiUrl}/api/v1/store/reports/menu-sales?startDate=${formattedStart}&endDate=${formattedEnd}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
 };

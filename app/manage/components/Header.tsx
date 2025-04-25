@@ -3,9 +3,9 @@
 import { useOrderFilterStore, useOrderStatusStore } from "@/store/manageStore";
 import Image from "next/image";
 import React, { useState } from "react";
-import { BsGear } from "react-icons/bs";
 import { FaRegUserCircle } from "react-icons/fa";
 import { TbClipboardList } from "react-icons/tb";
+import { PiCashRegister } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react"; // 추가
 import {
@@ -125,10 +125,13 @@ export default function Header() {
           className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
           onClick={() => setShowTableModal(true)}
         >
-          <TbClipboardList size={24} color="#808080" />
+          <PiCashRegister size={24} color="#808080" />
         </div>
-        <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
-          <BsGear size={20} color="#808080" />
+        <div
+          className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
+          onClick={() => router.push("/manage/sales")}
+        >
+          <TbClipboardList size={24} color="#808080" />
         </div>
         <div
           ref={logoutRef}
