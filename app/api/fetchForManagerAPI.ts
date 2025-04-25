@@ -211,7 +211,7 @@ export async function submitNewMenu(
   });
 
   if (!res.ok) throw new Error("메뉴 등록 실패");
-  return res.json();
+  return res;
 }
 
 export const deleteMenu = async (menu_id: number) => {
