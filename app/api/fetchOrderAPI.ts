@@ -33,3 +33,15 @@ export const fetchOrders = async (tableId: string) => {
   });
   return response;
 };
+
+export const fetchOrderHistory = async (token: string, tableId: string) => {
+  const response = await axios.get(`${apiUrl}/api/v1/orders/${tableId}`, {
+    withCredentials: true,
+    headers: {
+      "Content-Type": "application/json",
+      token,
+      tableId,
+    },
+  });
+  return response.data;
+};
