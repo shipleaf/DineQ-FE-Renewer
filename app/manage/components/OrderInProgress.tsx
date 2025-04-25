@@ -7,6 +7,7 @@ import {
 } from "@/app/api/fetchForManagerAPI";
 import { useOrderStatusStore } from "@/store/manageStore";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaRegClock } from "react-icons/fa";
 import { GoKebabHorizontal } from "react-icons/go";
@@ -42,6 +43,14 @@ export default function OrderInProgress() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null); // 팝오버용
   const [showCancelConfirm, setShowCancelConfirm] = useState(false); // 취소 확인 모달
   const [showCancelSuccess, setShowCancelSuccess] = useState(false); // 취소 완료 모달
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isError) {
+      router.push("/manage/login");
+    }
+  }, [isError, router]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -85,7 +94,7 @@ export default function OrderInProgress() {
   return (
     <>
       {/* 하나의 큰 박스 */}
-      <div className="h-[90vh] w-[32%] border-2 border-[#f0f0f0] rounded-[10px]">
+      <div className="h-[90vh] w-[100%] border-2 border-[#f0f0f0] rounded-[10px]">
         <div className="flex flex-col gap-2 p-4">
           <div className="flex">
             <div className="flex items-center gap-1">

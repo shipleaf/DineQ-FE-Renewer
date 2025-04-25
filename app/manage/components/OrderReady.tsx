@@ -60,7 +60,7 @@ export default function OrderCooking() {
 
   return (
     <>
-      <div className="h-[90vh] w-[32%] border-2 border-[#f0f0f0] rounded-[10px] p-4">
+      <div className="h-[90vh] w-[100%] border-2 border-[#f0f0f0] rounded-[10px] p-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1">
             <div className="bg-[#8B8BE1] w-[24px] h-[24px] flex items-center justify-center rounded-full">

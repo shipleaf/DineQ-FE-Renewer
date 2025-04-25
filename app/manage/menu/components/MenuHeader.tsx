@@ -17,6 +17,7 @@ import {
 } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import { logout } from "@/app/api/useLoginAPI";
 
 type Category = {
   categoryId: number;
@@ -65,6 +66,7 @@ export default function MenuHeader() {
   const [newCategoryDesc, setNewCategoryDesc] = useState("");
   const [showConfirmCategoryModal, setShowConfirmCategoryModal] =
     useState(false);
+  const logoutRef = useRef<HTMLDivElement>(null);
 
   function moveMenuItem(index: number, direction: "up" | "down") {
     setMenuList((prev) => {
@@ -81,6 +83,22 @@ export default function MenuHeader() {
       }));
     });
   }
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (logoutRef.current && !logoutRef.current.contains(e.target as Node)) {
+        setShowLogoutBox(false);
+      }
+    };
+
+    if (showLogoutBox) {
+      window.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, [showLogoutBox]);
 
   useEffect(() => {
     if (activeModal === "category-sort" || "menu-add") {
@@ -201,13 +219,23 @@ export default function MenuHeader() {
             <BsGear size={20} color="#808080" />
           </div>
           <div
+            ref={logoutRef}
             className="relative rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"
-            onClick={() => setShowLogoutBox(true)}
+            onClick={() => setShowLogoutBox((prev) => !prev)}
           >
             <FaRegUserCircle size={22} color="#808080" />
             {showLogoutBox && (
-              <div className="absolute z-[100] w-[100px] inset-0 top-[100%] right-[100%]">
-                <span>로그아웃</span>
+              <div className="absolute top-full right-0 mt-2 w-[120px] bg-white border border-gray-200 shadow-lg rounded-md z-[100] overflow-hidden">
+                <button
+                  className="w-full text-sm text-[#2a2a2a] hover:bg-gray-100 py-2 px-4 text-left"
+                  onClick={async () => {
+                    await logout();
+                    setShowLogoutBox(false);
+                    router.push("/manage/login");
+                  }}
+                >
+                  로그아웃
+                </button>
               </div>
             )}
           </div>
@@ -222,7 +250,7 @@ export default function MenuHeader() {
       )}
       <div
         className={`
-      fixed left-0 top-0 z-50 h-full w-[500px] bg-white shadow-lg p-6 space-y-4
+      fixed left-0 top-0 z-50 h-full w-[70vw] bg-white shadow-lg p-6 space-y-4
       transform transition-transform duration-300 ease-in-out
       ${showSidebar ? "translate-x-0" : "-translate-x-full"}
     `}
