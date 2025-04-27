@@ -74,10 +74,12 @@ export default function MenuHeader() {
   
       if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
   
+      // priority 값만 서로 교환
       const tempPriority = newArr[index].menuPriority;
       newArr[index].menuPriority = newArr[targetIndex].menuPriority;
       newArr[targetIndex].menuPriority = tempPriority;
-
+  
+      // 배열 순서 자체는 유지 (swap 안함)
       return newArr;
     });
   }
@@ -138,6 +140,7 @@ export default function MenuHeader() {
         categoryPriority: index + 1,
       })),
     };
+    
     try {
       await submitCategorySort(payload);
       alert("카테고리 정렬이 저장되었습니다.");
@@ -178,9 +181,9 @@ export default function MenuHeader() {
 
   const handleSubmitMenuSort = async () => {
     const payload = {
-      priorities: menuList.map((menu, index) => ({
+      priorities: menuList.map((menu) => ({
         menuId: menu.menuId,
-        menuPriority: index + 1,
+        menuPriority: menu.menuPriority,
       })),
     };
 
