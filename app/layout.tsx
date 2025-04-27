@@ -22,6 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body className={`${pretendard.variable} font-pretendard m-auto`}>
         <TanStackProvider>{children}</TanStackProvider>
       </body>
