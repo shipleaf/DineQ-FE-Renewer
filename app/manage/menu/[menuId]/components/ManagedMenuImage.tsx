@@ -121,13 +121,13 @@ export default function ManagedMenuImage() {
 
       {/* ✏️ 수정 가능 영역 */}
       <div className="p-4 pt-6 pb-0 flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-gray-300">
+        <div className="flex items-center border-b border-gray-300">
           <input
-            className="text-[20px] font-semibold text-[#2a2a2a] py-1 outline-none"
+            className="flex-1 text-[20px] font-semibold text-[#2a2a2a] py-1 outline-none min-w-0"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ml-4 flex-shrink-0">
             {/* ✅ 상태 토글 버튼 */}
             <div
               className={`flex items-center border rounded-full px-3 py-1 cursor-pointer text-sm font-medium ${

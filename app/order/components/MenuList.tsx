@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
 import { useQuery } from "@tanstack/react-query";
@@ -28,6 +28,8 @@ export default function MenuList() {
     retry: 2,
   });
 
+  const Menu: Menu[] = useMemo(() => data ?? [], [data]);
+
   const [showSkeleton, setShowSkeleton] = useState(true);
 
   useEffect(() => {
@@ -37,18 +39,8 @@ export default function MenuList() {
     return () => clearTimeout(timer);
   }, []);
 
-  const Menu: Menu[] = data ?? [];
-
-  const Category = Menu.reduce((acc: Record<string, number>, cur) => {
-    if (!acc[cur.categoryName]) {
-      acc[cur.categoryName] = cur.categoryId;
-    }
-    return acc;
-  }, {});
-
   const categoryRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-  const [activeCategory, setActiveCategory] = useState<number>(1);
   const router = useRouter();
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
@@ -57,6 +49,46 @@ export default function MenuList() {
   const skipObserverRef = useRef(false);
 
   const [isValidToken, setIsValidToken] = useState<boolean | null>(false);
+
+  const sortedCategories = Array.from(
+    new Map(
+      Menu.map((m) => [
+        m.categoryName,
+        { id: m.categoryId, priority: m.categoryPriority },
+      ])
+    )
+  ).sort((a, b) => a[1].priority - b[1].priority);
+
+  const Category = sortedCategories.reduce(
+    (acc: Record<string, number>, [name, { id }]) => {
+      acc[name] = id;
+      return acc;
+    },
+    {}
+  );
+
+  const [activeCategory, setActiveCategory] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      !showSkeleton &&
+      isValidToken &&
+      Menu.length > 0 &&
+      activeCategory === null
+    ) {
+      if (sortedCategories.length > 0) {
+        setActiveCategory(sortedCategories[0][1].id); // 첫 번째 category id
+      }
+    }
+  }, [
+    isLoading,
+    showSkeleton,
+    isValidToken,
+    Menu,
+    activeCategory,
+    sortedCategories,
+  ]);
 
   useEffect(() => {
     if (!token || !tableId) {
@@ -143,14 +175,15 @@ export default function MenuList() {
 
       let currentCategory: number | null = null;
 
-      Object.entries(categoryRefs.current).forEach(([id, el]) => {
+      for (const [, { id }] of sortedCategories) {
+        const el = categoryRefs.current[id];
         if (el) {
           const top = el.offsetTop;
           if (scrollTop >= top) {
-            currentCategory = Number(id);
+            currentCategory = id;
           }
         }
-      });
+      }
 
       if (currentCategory !== null && currentCategory !== activeCategory) {
         setActiveCategory(currentCategory);
@@ -167,7 +200,7 @@ export default function MenuList() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [activeCategory]);
+  }, [activeCategory, sortedCategories]);
 
   const isStillLoading = isLoading || showSkeleton || !isValidToken;
 
@@ -269,16 +302,16 @@ export default function MenuList() {
                           )
                         }
                       >
-                        <div className="p-6 bg-white flex justify-between items-start">
-                          <div>
-                            <h3 className="text-lg font-bold">
+                        <div className="p-6 bg-white flex items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-bold break-words">
                               {menu.menuName}
                             </h3>
-                            <p className="text-sm font-semibold">
+                            <p className="text-sm font-semibold mt-2">
                               {menu.menuPrice?.toLocaleString()}원
                             </p>
                           </div>
-                          <div className="w-[140px] h-[100px] rounded-[10px] overflow-hidden flex items-center justify-center">
+                          <div className="w-[140px] h-[100px] rounded-[10px] overflow-hidden flex-shrink-0 flex items-center justify-center">
                             <Image
                               src={menu.menuImage || "/DineQLogo.png"}
                               alt=""
