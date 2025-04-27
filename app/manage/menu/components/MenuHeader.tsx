@@ -71,15 +71,14 @@ export default function MenuHeader() {
     setMenuList((prev) => {
       const newArr = [...prev];
       const targetIndex = direction === "up" ? index - 1 : index + 1;
+  
       if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
-      [newArr[index], newArr[targetIndex]] = [
-        newArr[targetIndex],
-        newArr[index],
-      ];
-      return newArr.map((item, idx) => ({
-        ...item,
-        menuPriority: idx + 1,
-      }));
+  
+      const tempPriority = newArr[index].menuPriority;
+      newArr[index].menuPriority = newArr[targetIndex].menuPriority;
+      newArr[targetIndex].menuPriority = tempPriority;
+
+      return newArr;
     });
   }
 
@@ -143,7 +142,7 @@ export default function MenuHeader() {
       await submitCategorySort(payload);
       alert("카테고리 정렬이 저장되었습니다.");
       setActiveModal("none");
-      location.reload()
+      location.reload();
     } catch (err) {
       console.error("정렬 저장 실패", err);
       alert("저장 실패");
@@ -170,7 +169,7 @@ export default function MenuHeader() {
 
       alert("메뉴가 등록되었습니다.");
       setActiveModal("none");
-      location.reload()
+      location.reload();
     } catch (err) {
       console.error(err);
       alert("등록 실패");
@@ -189,7 +188,7 @@ export default function MenuHeader() {
       await updateMenuPriority(payload);
       setShowConfirmSortModal(false);
       setShowSuccessSortModal(true);
-      location.reload()
+      location.reload();
     } catch (err) {
       console.error("메뉴 정렬 저장 실패", err);
       alert("정렬 저장 실패");
