@@ -74,12 +74,14 @@ export default function MenuHeader() {
   
       if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
   
-      // priority 값만 서로 교환
+      // 🔥 menuPriority 서로 교환
       const tempPriority = newArr[index].menuPriority;
       newArr[index].menuPriority = newArr[targetIndex].menuPriority;
       newArr[targetIndex].menuPriority = tempPriority;
   
-      // 배열 순서 자체는 유지 (swap 안함)
+      // 🔥 배열 순서도 서로 교환
+      [newArr[index], newArr[targetIndex]] = [newArr[targetIndex], newArr[index]];
+  
       return newArr;
     });
   }
