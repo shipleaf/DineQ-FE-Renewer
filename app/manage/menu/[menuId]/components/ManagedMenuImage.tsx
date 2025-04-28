@@ -218,7 +218,7 @@ export default function ManagedMenuImage() {
                     alert("메뉴가 성공적으로 수정되었습니다.");
                     setConfirmModalOpen(false);
                     setHasChanged(false);
-                    router.push("/manage"); // 성공 후 이동 처리
+                    router.push("/manage/menu");
                   } catch (error) {
                     alert("저장 중 오류가 발생했습니다.");
                     console.error(error);
