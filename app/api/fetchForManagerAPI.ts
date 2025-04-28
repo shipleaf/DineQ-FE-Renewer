@@ -187,7 +187,7 @@ export async function submitMenuUpdate(
   });
 
   if (!res.ok) throw new Error("업데이트 실패");
-  return res.json();
+  return res;
 }
 
 export async function submitNewMenu(
