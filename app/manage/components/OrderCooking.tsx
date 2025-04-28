@@ -77,18 +77,16 @@ export default function OrderCooking() {
   };
 
   const formatOrderTime = (orderTime: string) => {
-    const date = new Date(orderTime);
-
+    const date = new Date(new Date(orderTime).getTime() + 9 * 60 * 60 * 1000);
+  
     const month = date.getMonth() + 1; // 0~11 → +1
     const day = date.getDate();
     const hours = date.getHours();
     const minutes = date.getMinutes();
-
+  
     const twoDigit = (n: number) => n.toString().padStart(2, "0");
-
-    return `${twoDigit(month)}월 ${twoDigit(day)}일 ${twoDigit(
-      hours
-    )}시 ${twoDigit(minutes)}분`;
+  
+    return `${twoDigit(month)}월 ${twoDigit(day)}일 ${twoDigit(hours)}시 ${twoDigit(minutes)}분`;
   };
 
   return (
@@ -250,6 +248,7 @@ export default function OrderCooking() {
               </h2>
               <div className="font-[500] text-[#a0a0a0] text-[12px] text-end">
                 {formatOrderTime(modalData[0].orderTime)}
+                
               </div>
               <div className="font-[500] text-[#a0a0a0] text-[12px] text-end">
                 주문번호 #{modalData[0].orderId}

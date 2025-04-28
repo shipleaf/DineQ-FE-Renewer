@@ -69,7 +69,7 @@ export default function OrderInProgress() {
   }, [modalData]);
 
   const formatOrderTime = (orderTime: string) => {
-    const date = new Date(orderTime);
+    const date = new Date(new Date(orderTime).getTime() + 9 * 60 * 60 * 1000);
 
     const month = date.getMonth() + 1; // 0~11 → +1
     const day = date.getDate();
