@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  fetchOrdersInReady,
-} from "@/app/api/fetchForManagerAPI";
+import { fetchOrdersInReady } from "@/app/api/fetchForManagerAPI";
 import { useOrderStatusStore } from "@/store/manageStore";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
@@ -34,7 +32,6 @@ export default function OrderCooking() {
 
   const [modalData, setModalData] = useState<OrderItem[] | null>(null);
 
-
   useEffect(() => {
     if (cookingUpdated) {
       refetch();
@@ -44,7 +41,7 @@ export default function OrderCooking() {
   }, [cookingUpdated]);
 
   const formatOrderTime = (orderTime: string) => {
-    const date = new Date(orderTime);
+    const date = new Date(new Date(orderTime).getTime() + 9 * 60 * 60 * 1000);
 
     const month = date.getMonth() + 1; // 0~11 → +1
     const day = date.getDate();
