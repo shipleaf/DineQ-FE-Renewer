@@ -45,8 +45,9 @@ export default function HistoryContainer() {
               주문 #{data.length - idx}
             </p>
             <span className="text-sm text-gray-500 mb-2">
-              new Date(new Date(group[0].orderTime).getTime() + 9 * 60 * 60 *
-              1000).toLocaleString()
+              {new Date(
+                new Date(group[0].orderTime).getTime() + 9 * 60 * 60 * 1000
+              ).toLocaleString()}
             </span>
           </div>
           {group.map((item, index) => (
