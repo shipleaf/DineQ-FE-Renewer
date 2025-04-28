@@ -54,6 +54,7 @@ export default function Header() {
   const [tableCount, setTableCount] = useState(0);
 
   const [isCheckingLogin, setIsCheckingLogin] = useState(true); // ✅ 추가
+  const [tablesWithOrders, setTablesWithOrders] = useState<number[]>([]);
 
   useEffect(() => {
     const verifyLogin = async () => {
@@ -220,14 +221,24 @@ export default function Header() {
                     try {
                       const results = await Promise.all(
                         selectedTableIds.map((id) =>
-                          fetchTableOrders(id).catch((err) => {
-                            if (err.response?.status === 404) return []; // 주문 없으면 빈 배열 반환
-                            throw err; // 다른 에러는 그대로 throw
-                          })
+                          fetchTableOrders(id)
+                            .then((res) => ({ id, orders: res })) // 테이블 id 같이 묶음
+                            .catch((err) => {
+                              if (err.response?.status === 404) {
+                                return { id, orders: [] }; // 404는 빈 배열로
+                              }
+                              throw err;
+                            })
                         )
                       );
-                      const merged = results.flat();
-                      setTableOrders(merged);
+
+                      const mergedOrders = results.flatMap((r) => r.orders);
+                      setTableOrders(mergedOrders); // 주문 내역 보여줄건 평평하게
+                      setTablesWithOrders(
+                        results
+                          .filter((r) => r.orders.length > 0)
+                          .map((r) => r.id)
+                      ); // ✅ 주문 있었던 테이블 id만 저장
                       setIsTableSelectorOpen(false);
                     } catch (err) {
                       console.error("여러 테이블 주문 조회 실패:", err);
@@ -361,7 +372,7 @@ export default function Header() {
                 onClick={async () => {
                   try {
                     await Promise.all(
-                      selectedTableIds.map((id) => payingTableOrders(id))
+                      tablesWithOrders.map((id) => payingTableOrders(id)) // ✅ 주문 있는 테이블만 정산
                     );
                     setShowConfirmPayModal(false);
                     setShowSuccessPayModal(true);

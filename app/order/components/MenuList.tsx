@@ -283,7 +283,7 @@ export default function MenuList() {
               </div>
             ))
           : Object.entries(Category).map(([name, id]) => {
-              const menus = Menu.filter((m) => m.categoryId === id);
+              const menus = Menu.filter((m) => m.categoryId === id && m.onSale);
               return (
                 <div key={id}>
                   <div
