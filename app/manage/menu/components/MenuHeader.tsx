@@ -9,7 +9,6 @@ import {
 } from "@/app/api/fetchForManagerAPI";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { BsGear } from "react-icons/bs";
 import { FaRegUserCircle } from "react-icons/fa";
 import {
   IoIosArrowDropdownCircle,
@@ -71,17 +70,20 @@ export default function MenuHeader() {
     setMenuList((prev) => {
       const newArr = [...prev];
       const targetIndex = direction === "up" ? index - 1 : index + 1;
-  
+
       if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
-  
+
       // 🔥 menuPriority 서로 교환
       const tempPriority = newArr[index].menuPriority;
       newArr[index].menuPriority = newArr[targetIndex].menuPriority;
       newArr[targetIndex].menuPriority = tempPriority;
-  
+
       // 🔥 배열 순서도 서로 교환
-      [newArr[index], newArr[targetIndex]] = [newArr[targetIndex], newArr[index]];
-  
+      [newArr[index], newArr[targetIndex]] = [
+        newArr[targetIndex],
+        newArr[index],
+      ];
+
       return newArr;
     });
   }
@@ -142,7 +144,7 @@ export default function MenuHeader() {
         categoryPriority: index + 1,
       })),
     };
-    
+
     try {
       await submitCategorySort(payload);
       alert("카테고리 정렬이 저장되었습니다.");
@@ -221,9 +223,6 @@ export default function MenuHeader() {
         </div>
 
         <div className="flex items-center justify-end gap-3 col-span-4">
-          <div className="rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer">
-            <BsGear size={20} color="#808080" />
-          </div>
           <div
             ref={logoutRef}
             className="relative rounded-[10px] border w-[36px] h-[36px] flex items-center justify-center border-[#c0c0c0] cursor-pointer"

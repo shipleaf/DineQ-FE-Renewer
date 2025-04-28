@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react"; // 추가
 import {
   addTable,
+  checkLoginState,
   deleteTable,
   fetchTableOrders,
   getTableNumber,
@@ -52,6 +53,20 @@ export default function Header() {
   const [isTableSelectorOpen, setIsTableSelectorOpen] = useState(true);
   const [tableCount, setTableCount] = useState(0);
 
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true); // ✅ 추가
+
+  useEffect(() => {
+    const verifyLogin = async () => {
+      try {
+        await checkLoginState();
+        setIsCheckingLogin(false); // 로그인 성공 → 로딩 끝
+      } catch {
+        router.replace("/manage/login"); // 에러 → 로그인 페이지 이동
+      }
+    };
+    verifyLogin();
+  }, [router]);
+
   const fetchTableCount = async () => {
     try {
       const count = await getTableNumber();
@@ -80,6 +95,14 @@ export default function Header() {
       window.removeEventListener("click", handleClickOutside);
     };
   }, [showLogoutBox]);
+
+  if (isCheckingLogin) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-5 items-center justify-between p-4">

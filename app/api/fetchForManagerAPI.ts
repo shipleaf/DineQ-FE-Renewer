@@ -314,3 +314,10 @@ export const fetchSalesHistory = async (startDate: Date, endDate: Date) => {
   );
   return response.data;
 };
+
+export const checkLoginState = async () => {
+  const reponse = await axios.get(`${apiUrl}/api/v1/auth/check`, {
+    withCredentials: true,
+  });
+  return reponse.data;
+};
