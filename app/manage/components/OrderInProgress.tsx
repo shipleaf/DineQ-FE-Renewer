@@ -8,9 +8,10 @@ import {
 import { useOrderStatusStore } from "@/store/manageStore";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FaRegClock } from "react-icons/fa";
 import { GoKebabHorizontal } from "react-icons/go";
+import { useRef, useEffect } from "react";
 
 export type OrderItem = {
   orderId: number;
@@ -24,14 +25,13 @@ export type OrderItem = {
 };
 
 export default function OrderInProgress() {
-  // eslint-disable-next-line
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isError, refetch } = useQuery({
     queryKey: ["orders", "in-progress"],
     queryFn: fetchOrdersInProgress,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
-  const orders: OrderItem[][] = data ?? [];
+  const orders = useMemo<OrderItem[][]>(() => data ?? [], [data]);
   const setCookingUpdated = useOrderStatusStore(
     (state) => state.setCookingUpdated
   );
@@ -45,6 +45,26 @@ export default function OrderInProgress() {
   const [showCancelSuccess, setShowCancelSuccess] = useState(false); // 취소 완료 모달
 
   const router = useRouter();
+  const prevOrderCountRef = useRef(0);
+
+  const orderCount = useMemo(() => {
+    return orders.flat().length;
+  }, [orders]);
+
+  useEffect(() => {
+    const prevCount = prevOrderCountRef.current;
+
+    if (prevCount && orderCount > prevCount) {
+      window.ReactNativeWebView?.postMessage(
+        JSON.stringify({
+          type: "playSound",
+          payload: "새로운 주문이 접수되었습니다.",
+        })
+      );
+    }
+
+    prevOrderCountRef.current = orderCount;
+  }, [orderCount]);
 
   useEffect(() => {
     if (isError) {
