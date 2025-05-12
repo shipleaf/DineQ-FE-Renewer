@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { fetchSalesHistory } from "@/app/api/fetchForManagerAPI"; // fetch 함수 위치에 맞게 수정
+import {
+  fetchSalesHistory,
+  fetchTotalSales,
+} from "@/app/api/fetchForManagerAPI"; // fetch 함수 위치에 맞게 수정
 import SalesHeader from "./components/SalesHeader";
 
 type SalesItem = {
@@ -16,6 +19,9 @@ export default function SalesHistoryPage() {
   const [salesData, setSalesData] = useState<SalesItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [totalRevenue, setTotalRevenue] = useState<{
+    totalSales: number;
+  } | null>(null);
 
   const handleFetch = async () => {
     if (!startDate || !endDate) {
@@ -27,16 +33,17 @@ export default function SalesHistoryPage() {
     setError("");
 
     try {
-      const data = await fetchSalesHistory(
-        new Date(startDate),
-        new Date(endDate)
-      );
+      const [data, total] = await Promise.all([
+        fetchSalesHistory(new Date(startDate), new Date(endDate)),
+        fetchTotalSales(new Date(startDate), new Date(endDate)),
+      ]);
       setSalesData(data);
+      setTotalRevenue(total);
+      setLoading(false);
+      // console.log(totalRevenue)
     } catch (err) {
       console.error(err);
       setError("데이터를 불러오는 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -81,22 +88,33 @@ export default function SalesHistoryPage() {
 
         {salesData && salesData.length > 0 ? (
           <div className="space-y-4">
-            {salesData.map((item, idx) => (
-              <div
-                key={idx}
-                className="rounded p-4 flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-semibold text-lg">{item.menuName}</p>
-                  <p className="text-sm text-gray-600">
-                    판매량: {item.totalSold}개
+            <div className="space-y-4">
+              {salesData.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="rounded p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-semibold text-lg">{item.menuName}</p>
+                    <p className="text-sm text-gray-600">
+                      판매량: {item.totalSold}개
+                    </p>
+                  </div>
+                  <p className="font-bold text-[#093AEE]">
+                    {item.totalRevenue.toLocaleString()}원
                   </p>
                 </div>
-                <p className="font-bold text-[#093AEE]">
-                  {item.totalRevenue.toLocaleString()}원
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
+            <hr className="border-[#f0f0f0]" />
+            <div className="flex items-center justify-between px-4">
+              <span>총합</span>
+              <span className="text-[#093AEE]">
+                {totalRevenue !== null
+                  ? `${totalRevenue.totalSales.toLocaleString()}원`
+                  : "-"}
+              </span>
+            </div>
           </div>
         ) : salesData && salesData.length === 0 ? (
           <p className="text-center text-gray-500">조회된 데이터가 없습니다.</p>
