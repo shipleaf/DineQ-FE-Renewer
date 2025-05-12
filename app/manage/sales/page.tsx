@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   fetchSalesHistory,
   fetchTotalSales,
@@ -22,6 +22,7 @@ export default function SalesHistoryPage() {
   const [totalRevenue, setTotalRevenue] = useState<{
     totalSales: number;
   } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleFetch = async () => {
     if (!startDate || !endDate) {
@@ -47,37 +48,81 @@ export default function SalesHistoryPage() {
     }
   };
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // Tailwind 기준 sm 이하
+    };
+
+    checkMobile(); // 처음에도 체크
+    window.addEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
+
   return (
     <>
       <SalesHeader />
       <div className="max-w-3xl mx-auto p-6 flex flex-col">
         <h2 className="text-2xl font-bold mb-6 ">메뉴별 매출 조회</h2>
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1">시작 날짜</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="rounded px-3 py-2"
-            />
+        {isMobile ? (
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex flex-col">
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">시작 날짜</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded px-3 py-2"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">종료 날짜</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded px-3 py-2"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleFetch}
+              className="bg-[#093AEE] text-white px-4 py-2 rounded mt-5"
+            >
+              조회하기
+            </button>
           </div>
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1">종료 날짜</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="rounded px-3 py-2"
-            />
+        ) : (
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">시작 날짜</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="rounded px-3 py-2"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">종료 날짜</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="rounded px-3 py-2"
+              />
+            </div>
+            <button
+              onClick={handleFetch}
+              className="bg-[#093AEE] text-white px-4 py-2 rounded mt-5"
+            >
+              조회하기
+            </button>
           </div>
-          <button
-            onClick={handleFetch}
-            className="bg-[#093AEE] text-white px-4 py-2 rounded mt-5"
-          >
-            조회하기
-          </button>
-        </div>
+        )}
 
         {loading && (
           <div className="fixed inset-0 w-[100vw] h-[100vh] flex top-[45%] justify-center z-[100] bg-white/50">
