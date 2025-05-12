@@ -23,6 +23,7 @@ export default function OrderCooking() {
     queryFn: fetchOrdersInReady,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchInterval: 5000,
   });
 
   const cookingUpdated = useOrderStatusStore((state) => state.cookingUpdated);
