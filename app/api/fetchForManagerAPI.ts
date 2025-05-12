@@ -321,3 +321,16 @@ export const checkLoginState = async () => {
   });
   return reponse.data;
 };
+
+export const fetchTotalSales = async (startDate: Date, endDate: Date) => {
+  const formattedStart = format(startDate, "yyyy-MM-dd");
+  const formattedEnd = format(endDate, "yyyy-MM-dd");
+
+  const response = await axios.get(
+    `${apiUrl}/api/v1/store/reports/sales?startDate=${formattedStart}&endDate=${formattedEnd}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};

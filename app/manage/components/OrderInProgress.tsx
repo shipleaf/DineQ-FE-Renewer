@@ -55,19 +55,19 @@ export default function OrderInProgress() {
   useEffect(() => {
     const prevCount = prevOrderCountRef.current;
     const offset = orderCountOffsetRef.current;
-  
-    if (prevCount + offset && orderCount > prevCount + offset) {
+
+    if (orderCount > prevCount + offset) {
       window.ReactNativeWebView?.postMessage(
         JSON.stringify({
           type: "playSound",
           payload: "새로운 주문이 접수되었습니다.",
         })
       );
+      // console.log(123)
     }
-  
-    // 현재 값을 보정 없이 저장
+
     prevOrderCountRef.current = orderCount;
-    orderCountOffsetRef.current = 0; // 보정 초기화
+    orderCountOffsetRef.current = 0;
   }, [orderCount]);
 
   useEffect(() => {
