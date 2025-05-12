@@ -28,7 +28,11 @@ type OrderItem = {
   categoryName: string;
 };
 
-export default function Header() {
+type HeadersProps = {
+  isMobile: boolean;
+}
+
+export default function Header({isMobile}: HeadersProps) {
   const { showInProgress, showCooking, showReady, toggleFilter } =
     useOrderFilterStore();
 
@@ -101,6 +105,285 @@ export default function Header() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col items-center justify-between p-4 gap-8">
+        <div className="flex items-center justify-center">
+          <Image src="/image.png" alt="" width={32} height={24} />
+          <span className="font-[700] text-[#4E4868] text-[20px]">DineQ</span>
+        </div>
+        <div className="flex items-center flex-col gap-6 justify-end">
+          <button
+            className="text-md text-[#4E4868] font-[700] text-sm py-4 px-12 rounded-[999px] w-full border-1 border-[#a9a9a9]"
+            onClick={() => {
+              router.push("/manage/menu");
+            }}
+          >
+            메뉴관리
+          </button>
+          <div
+            className="text-md text-[#4E4868] font-[700] text-sm py-4 px-12 rounded-[999px] w-full border-1 border-[#a9a9a9]"
+            onClick={() => setShowTableModal(true)}
+          >
+            정산하기
+          </div>
+          <div
+            className="text-md text-[#4E4868] font-[700] text-sm py-4 px-12 rounded-[999px] w-full border-1 border-[#a9a9a9]"
+            onClick={() => router.push("/manage/sales")}
+          >
+            매출조회
+          </div>
+          <div
+            ref={logoutRef}
+            className="text-md text-[#4E4868] font-[700] text-sm py-4 px-12 rounded-[999px] w-full border-1 border-[#a9a9a9]"
+            onClick={async () => {
+              await logout();
+              router.push("/manage/login");
+            }}
+          >
+            로그아웃
+          </div>
+        </div>
+        {showTableModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl w-[90vw] max-w-[500px] shadow-xl space-y-4 relative max-h-[95vh] overflow-auto">
+              <h2 className="text-lg font-bold text-center">테이블 정산</h2>
+
+              {isTableSelectorOpen && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-5 gap-2">
+                    {[...Array(tableCount)].map((_, i) => {
+                      const tableId = i + 1;
+                      const isSelected = selectedTableIds.includes(tableId);
+                      return (
+                        <div
+                          key={tableId}
+                          onClick={() =>
+                            setSelectedTableIds((prev) =>
+                              isSelected
+                                ? prev.filter((id) => id !== tableId)
+                                : [...prev, tableId]
+                            )
+                          }
+                          className={`border px-3 py-2 rounded cursor-pointer flex justify-between items-center text-[10px] ${
+                            isSelected ? "bg-blue-100 border-blue-500" : ""
+                          }`}
+                        >
+                          <span>{tableId}번</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    className="w-full mt-4 bg-[#093AEE] text-white py-2 rounded"
+                    onClick={async () => {
+                      if (selectedTableIds.length === 0) {
+                        alert("테이블을 선택하세요.");
+                        return;
+                      }
+
+                      try {
+                        const results = await Promise.all(
+                          selectedTableIds.map((id) =>
+                            fetchTableOrders(id)
+                              .then((res) => ({ id, orders: res })) // 테이블 id 같이 묶음
+                              .catch((err) => {
+                                if (err.response?.status === 404) {
+                                  return { id, orders: [] }; // 404는 빈 배열로
+                                }
+                                throw err;
+                              })
+                          )
+                        );
+
+                        const mergedOrders = results.flatMap((r) => r.orders);
+                        setTableOrders(mergedOrders); // 주문 내역 보여줄건 평평하게
+                        setTablesWithOrders(
+                          results
+                            .filter((r) => r.orders.length > 0)
+                            .map((r) => r.id)
+                        ); // ✅ 주문 있었던 테이블 id만 저장
+                        setIsTableSelectorOpen(false);
+                      } catch (err) {
+                        console.error("여러 테이블 주문 조회 실패:", err);
+                        alert("테이블 조회 실패");
+                      }
+                    }}
+                  >
+                    조회하기
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => setIsTableSelectorOpen((prev) => !prev)}
+                className="text-sm underline text-blue-600 mt-2"
+              >
+                {isTableSelectorOpen ? "테이블 선택 닫기" : "테이블 선택 열기"}
+              </button>
+              <div className="max-h-[200px] overflow-y-auto text-sm">
+                {tableOrders.length === 0 ? (
+                  <p className="text-center text-[#888]">
+                    주문 내역이 없습니다.
+                  </p>
+                ) : (
+                  tableOrders.flat().map((order, idx) => (
+                    <div
+                      key={idx}
+                      className="border-b py-2 flex justify-between"
+                    >
+                      <div>
+                        <p className="font-bold">{order.menuName}</p>
+                        <p className="text-xs text-[#666]">
+                          {order.quantity}개 /{" "}
+                          {order.totalPrice.toLocaleString()}원
+                        </p>
+                      </div>
+                      <p className="text-right text-sm text-[#333]">
+                        {order.categoryName}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t pt-2 text-right font-bold text-[#2a2a2a]">
+                총 금액:{" "}
+                {tableOrders.length > 0
+                  ? tableOrders
+                      .flat()
+                      .reduce((sum, o) => sum + o.totalPrice, 0)
+                      .toLocaleString()
+                  : "0"}
+                원
+              </div>
+
+              <div className="flex justify-between gap-2 mt-4">
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-2 rounded bg-green-500 text-white text-[12px]"
+                    onClick={async () => {
+                      try {
+                        await addTable();
+                        alert("테이블이 추가되었습니다.");
+                        await fetchTableCount();
+                        // optional: 리프레시 or 테이블 수 업데이트
+                      } catch (err) {
+                        console.error("테이블 추가 실패", err);
+                        alert("테이블 추가 실패");
+                      }
+                    }}
+                  >
+                    테이블 추가
+                  </button>
+                  <button
+                    className="px-3 py-2 rounded bg-red-500 text-white text-[12px]"
+                    onClick={async () => {
+                      try {
+                        await deleteTable();
+                        alert("테이블이 삭제되었습니다.");
+                        // optional: 리프레시 or 테이블 수 업데이트
+                        await fetchTableCount();
+                      } catch (err) {
+                        console.error("테이블 삭제 실패", err);
+                        alert("테이블 삭제 실패");
+                      }
+                    }}
+                  >
+                    테이블 삭제
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    className="px-4 py-2 rounded bg-gray-300 text-[#333] text-[12px]"
+                    onClick={() => {
+                      setShowTableModal(false);
+                      setSelectedTableIds([]);
+                      setTableOrders([]);
+                      setIsTableSelectorOpen(true);
+                    }}
+                  >
+                    닫기
+                  </button>
+                  {tableOrders.length > 0 && (
+                    <button
+                      className="px-4 py-2 rounded bg-blue-500 text-white text-[12px]"
+                      onClick={() => setShowConfirmPayModal(true)}
+                    >
+                      정산하기
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {showConfirmPayModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl w-[320px] shadow-xl text-center">
+              <p className="text-[#2a2a2a] font-bold mb-2">정산 확인</p>
+              <p className="text-sm text-[#666]">
+                정말 {selectedTableIds.join(", ")}번 테이블을 정산하시겠습니까?
+              </p>
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  className="bg-gray-300 px-4 py-2 rounded text-[#333]"
+                  onClick={() => {
+                    setShowConfirmPayModal(false);
+                    setSelectedTableIds([]);
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  className="bg-blue-500 px-4 py-2 rounded text-white"
+                  onClick={async () => {
+                    try {
+                      await Promise.all(
+                        tablesWithOrders.map((id) => payingTableOrders(id)) // ✅ 주문 있는 테이블만 정산
+                      );
+                      setShowConfirmPayModal(false);
+                      setShowSuccessPayModal(true);
+                      setShowTableModal(false);
+                      setCookingUpdated(true);
+                      setIsTableSelectorOpen(true);
+                    } catch (err) {
+                      console.error("정산 실패", err);
+                      alert("정산 실패");
+                    }
+                  }}
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showSuccessPayModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl w-[320px] shadow-xl text-center">
+              <p className="text-green-600 font-bold mb-2">
+                {selectedTableIds.join(", ")}번 테이블 정산 완료
+              </p>
+              <button
+                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md w-full"
+                onClick={() => {
+                  setShowSuccessPayModal(false);
+                  setSelectedTableIds([]);
+                  setTableOrders([]);
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
