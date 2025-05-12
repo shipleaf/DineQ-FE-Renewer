@@ -22,7 +22,7 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
   const token = searchParams.get("token");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   return (
@@ -159,11 +159,15 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
               </p>
               <div className="flex justify-center gap-4">
                 <button
-                  className="px-4 py-2 rounded bg-[#35CAF4] text-white font-bold"
+                  className="px-4 py-2 rounded bg-[#35CAF4] text-white font-bold disabled:opacity-50"
+                  disabled={isLoading}
                   onClick={async () => {
+                    if (isLoading) return; // 중복 방지
+                    setIsLoading(true);
+
                     try {
                       const orderData = {
-                        tableId: Number(tableId), // 👉 QR로 받은 tableId 값으로 교체 필요
+                        tableId: Number(tableId),
                         orders: items.map((item) => ({
                           menuId: item.menuId,
                           quantity: item.quantity,
@@ -175,13 +179,14 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
                         return;
                       }
 
-                      await createOrders(orderData, token, tableId); // 🔹 주문 요청
-                      useCartStore.getState().clearCart(); // 장바구니 비우기
-
-                      setShowSuccessModal(true); // ✅ 모달로 변경
+                      await createOrders(orderData, token, tableId);
+                      useCartStore.getState().clearCart();
+                      setShowSuccessModal(true);
                     } catch (error) {
                       console.error("주문 실패:", error);
                       alert("주문 처리 중 문제가 발생했습니다.");
+                    } finally {
+                      setIsLoading(false);
                     }
                   }}
                 >
@@ -190,6 +195,7 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
                 <button
                   className="px-4 py-2 rounded bg-gray-200 text-[#333]"
                   onClick={() => setShowModal(false)}
+                  disabled={isLoading}
                 >
                   취소
                 </button>
@@ -222,6 +228,11 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
               확인
             </button>
           </div>
+        </div>
+      )}
+      {isLoading && (
+        <div className="fixed inset-0 bg-white/30 flex items-center justify-center z-50">
+          <div className="loader w-[48px] h-[48px]"></div>
         </div>
       )}
     </div>
