@@ -45,30 +45,55 @@ export default function OrderInProgress() {
   const [showCancelSuccess, setShowCancelSuccess] = useState(false); // 취소 완료 모달
 
   const router = useRouter();
-  const prevOrderCountRef = useRef(0);
   const orderCountOffsetRef = useRef(0);
 
-  const orderCount = useMemo(() => {
-    return orders.flat().length;
-  }, [orders]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevOrderIdsRef = useRef<number[]>([]);
 
   useEffect(() => {
-    const prevCount = prevOrderCountRef.current;
-    const offset = orderCountOffsetRef.current;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
 
-    if (orderCount > prevCount + offset) {
+    const currentOrderIds = orders.flat().map((o) => o.orderId);
+    const prevOrderIdSet = new Set(prevOrderIdsRef.current); // ✅ Set으로 변환
+
+    // 🔍 새 주문만 필터링 (Set.has는 O(1))
+    const newOrderIds = currentOrderIds.filter((id) => !prevOrderIdSet.has(id));
+
+    if (newOrderIds.length > 0) {
       window.ReactNativeWebView?.postMessage(
         JSON.stringify({
           type: "playSound",
           payload: "새로운 주문이 접수되었습니다.",
         })
       );
-      // console.log(123)
+
+      // 기준 ID 목록 저장
+      const baselineOrderIdSet = new Set(currentOrderIds);
+
+      // 10초 후 처리
+      timerRef.current = setTimeout(() => {
+        const current = orders.flat().map((o) => o.orderId);
+        const currentIdSet = new Set(current);
+        const stillPending = Array.from(baselineOrderIdSet).filter((id) =>
+          currentIdSet.has(id)
+        );
+
+        if (stillPending.length > 0) {
+          window.ReactNativeWebView?.postMessage(
+            JSON.stringify({
+              type: "playSound",
+              payload: "아직 처리되지 않은 주문이 있습니다.",
+            })
+          );
+        }
+      }, 10000);
     }
 
-    prevOrderCountRef.current = orderCount;
-    orderCountOffsetRef.current = 0;
-  }, [orderCount]);
+    // 🔄 Set 대신 배열로 저장 (다음 useEffect 실행을 위한 기준)
+    prevOrderIdsRef.current = currentOrderIds;
+  }, [orders]);
 
   useEffect(() => {
     if (isError) {
