@@ -28,7 +28,7 @@ export default function OrderInProgress() {
   const { data, isError, refetch } = useQuery({
     queryKey: ["orders", "in-progress"],
     queryFn: fetchOrdersInProgress,
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
   const orders = useMemo<OrderItem[][]>(() => data ?? [], [data]);
@@ -49,6 +49,17 @@ export default function OrderInProgress() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const prevOrderIdsRef = useRef<number[]>([]);
+
+  const inProgressUpdated = useOrderStatusStore((s) => s.inProgressUpdated);
+  const setInProgressUpdated = useOrderStatusStore(
+    (s) => s.setInProgressUpdated
+  );
+  useEffect(() => {
+    if (inProgressUpdated) {
+      refetch();
+      setInProgressUpdated(false);
+    }
+  }, [inProgressUpdated, refetch, setInProgressUpdated]);
 
   useEffect(() => {
     if (timerRef.current) {
