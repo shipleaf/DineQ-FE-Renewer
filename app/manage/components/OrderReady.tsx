@@ -23,23 +23,21 @@ export default function OrderCooking() {
     queryFn: fetchOrdersInReady,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
-  const cookingUpdated = useOrderStatusStore((state) => state.cookingUpdated);
-  const setCookingUpdated = useOrderStatusStore(
-    (state) => state.setCookingUpdated
-  );
+  const readyUpdated = useOrderStatusStore((state) => state.readyUpdated);
+  const setReadyUpdated = useOrderStatusStore((state) => state.setReadyUpdated);
 
   const [modalData, setModalData] = useState<OrderItem[] | null>(null);
 
   useEffect(() => {
-    if (cookingUpdated) {
+    if (readyUpdated) {
       refetch();
-      setCookingUpdated(false);
+      setReadyUpdated(false);
     }
     // eslint-disable-next-line
-  }, [cookingUpdated]);
+  }, [readyUpdated]);
 
   const formatOrderTime = (orderTime: string) => {
     const date = new Date(new Date(orderTime).getTime() + 9 * 60 * 60 * 1000);
