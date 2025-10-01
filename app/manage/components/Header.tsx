@@ -30,15 +30,13 @@ type OrderItem = {
 
 type HeadersProps = {
   isMobile: boolean;
-}
+};
 
-export default function Header({isMobile}: HeadersProps) {
+export default function Header({ isMobile }: HeadersProps) {
   const { showInProgress, showCooking, showReady, toggleFilter } =
     useOrderFilterStore();
 
-  const setCookingUpdated = useOrderStatusStore(
-    (state) => state.setCookingUpdated
-  );
+  const st = useOrderStatusStore.getState();
 
   const checkboxes = [
     { id: "before", label: "주문처리중", stateKey: "showInProgress" },
@@ -351,7 +349,9 @@ export default function Header({isMobile}: HeadersProps) {
                       setShowConfirmPayModal(false);
                       setShowSuccessPayModal(true);
                       setShowTableModal(false);
-                      setCookingUpdated(true);
+                      st.setInProgressUpdated(true);
+                      st.setCookingUpdated(true);
+                      st.setReadyUpdated(true);
                       setIsTableSelectorOpen(true);
                     } catch (err) {
                       console.error("정산 실패", err);
@@ -660,7 +660,9 @@ export default function Header({isMobile}: HeadersProps) {
                     setShowConfirmPayModal(false);
                     setShowSuccessPayModal(true);
                     setShowTableModal(false);
-                    setCookingUpdated(true);
+                    st.setInProgressUpdated(true);
+                    st.setCookingUpdated(true);
+                    st.setReadyUpdated(true);
                     setIsTableSelectorOpen(true);
                   } catch (err) {
                     console.error("정산 실패", err);
