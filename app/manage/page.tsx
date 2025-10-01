@@ -82,9 +82,11 @@ export default function Page() {
 
               if (path.startsWith("/api/v1/orders")) {
                 st.setInProgressUpdated(true);
+                st.setCookingUpdated(true);
               }
               if (path.includes("/api/v1/store/orders/accept")) {
                 st.setCookingUpdated(true);
+                st.setReadyUpdated(true);
               }
               if (path.includes("/api/v1/store/orders/complete")) {
                 st.setReadyUpdated(true);
