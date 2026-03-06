@@ -36,7 +36,7 @@ export default function Header() {
             <span className="font-[700] text-sm text-[#4E4868]">DineQ</span>
           </div>
           <div className="flex items-center gap-2 h-full">
-            <Image src="/whale.png" alt="" width={32} height={24} />
+            <Image src="/whale.png" alt="술고래" width={32} height={24} />
             <span className="font-[700] text-lg text-[#2a2a2a]">
               술고래 조치원점
             </span>

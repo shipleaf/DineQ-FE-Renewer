@@ -1,19 +1,20 @@
 import axios from "axios";
+import type { Menu } from "@/app/type/menu/menu";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-// 전체 메뉴 조회
-export const fetchAllMenus = async () => {
+export const fetchAllMenus = async (): Promise<Menu[]> => {
   const response = await axios.get(`${apiUrl}/api/v1/menus`, {
     withCredentials: true,
   });
-  return response.data;
+
+  return response.data as Menu[];
 };
 
-// 특정 메뉴 상세 조회
-export const fetchMenuById = async (menuId: number) => {
+export const fetchMenuById = async (menuId: number): Promise<Menu> => {
   const response = await axios.get(`${apiUrl}/api/v1/menus/${menuId}`, {
     withCredentials: true,
   });
-  return response.data;
+
+  return response.data as Menu;
 };

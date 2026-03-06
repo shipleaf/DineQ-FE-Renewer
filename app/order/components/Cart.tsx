@@ -30,7 +30,7 @@ export default function Cart({ setIsBottomSheet }: CartProps) {
       {/* ✅ 상단: 헤더 + 아이템 리스트 (스크롤 영역) */}
       <div className="flex-1 overflow-y-auto pb-4">
         <div className="p-4 py-6 grid grid-cols-5 items-center">
-          <button onClick={() => setIsBottomSheet(false)}>
+          <button onClick={() => setIsBottomSheet(false)} aria-label="뒤로가기">
             <FaArrowLeft color="#2a2a2a" size={20} />
           </button>
           <span className="text-lg font-bold col-span-3 text-center text-[#2a2a2a]">

@@ -1,94 +1,80 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
+import { validateOrderSession } from "@/app/api/validateOrderSessionAPI";
+import type { CategoryEntry, Menu, MenusByCategoryId } from "@/app/type/menu/menu";
+import MenuListErrorOverlay from "./menu-list/MenuListErrorOverlay";
+import MenuListLoadMoreMessage from "./menu-list/MenuListLoadMoreMessage";
+import MenuListLoadingOverlay from "./menu-list/MenuListLoadingOverlay";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-type Menu = {
-  categoryId: number;
-  categoryName: string;
-  categoryPriority: number;
-  menuId: number;
-  menuName: string;
-  menuPrice: number;
-  imageUrl: string | null;
-  onSale: boolean;
-  menuImage: string;
-};
+const INITIAL_CATEGORY_RENDER_COUNT = 2;
+const CATEGORY_RENDER_BATCH_SIZE = 2;
+const CATEGORY_RENDER_INTERVAL_MS = 120;
 
 export default function MenuList() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError } = useQuery<Menu[]>({
     queryKey: ["menus"],
     queryFn: fetchAllMenus,
     retry: 2,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  const Menu: Menu[] = useMemo(() => data ?? [], [data]);
+  const menus = useMemo<Menu[]>(() => data ?? [], [data]);
 
-  const [showSkeleton, setShowSkeleton] = useState(true);
+  const categoryRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const buttonRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+  const pendingScrollCategoryRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSkeleton(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const categoryRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const router = useRouter();
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
   const token = searchParams.get("token");
 
-  const skipObserverRef = useRef(false);
-
-  const [isValidToken, setIsValidToken] = useState<boolean | null>(false);
-
-  const sortedCategories = Array.from(
-    new Map(
-      Menu.map((m) => [
-        m.categoryName,
-        { id: m.categoryId, priority: m.categoryPriority },
-      ])
-    )
-  ).sort((a, b) => a[1].priority - b[1].priority);
-
-  const Category = sortedCategories.reduce(
-    (acc: Record<string, number>, [name, { id }]) => {
-      acc[name] = id;
-      return acc;
-    },
-    {}
+  const [isValidToken, setIsValidToken] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<number | null>(null);
+  const [renderedCategoryCount, setRenderedCategoryCount] = useState(
+    INITIAL_CATEGORY_RENDER_COUNT
   );
 
-  const [activeCategory, setActiveCategory] = useState<number | null>(null);
+  const { sortedCategories, categoryEntries, menusByCategoryId } = useMemo(() => {
+    const categoryMap = new Map<string, { id: number; priority: number }>();
+    const groupedMenus: MenusByCategoryId = {};
 
-  useEffect(() => {
-    if (
-      !isLoading &&
-      !showSkeleton &&
-      isValidToken &&
-      Menu.length > 0 &&
-      activeCategory === null
-    ) {
-      if (sortedCategories.length > 0) {
-        setActiveCategory(sortedCategories[0][1].id); // 첫 번째 category id
+    for (const menu of menus) {
+      categoryMap.set(menu.categoryName, {
+        id: menu.categoryId,
+        priority: menu.categoryPriority,
+      });
+
+      if (menu.onSale) {
+        (groupedMenus[menu.categoryId] ??= []).push(menu);
       }
     }
-  }, [
-    isLoading,
-    showSkeleton,
-    isValidToken,
-    Menu,
-    activeCategory,
-    sortedCategories,
-  ]);
+
+    const sorted = Array.from(categoryMap.entries()).sort(
+      (a, b) => a[1].priority - b[1].priority
+    );
+
+    const entries: CategoryEntry[] = sorted.map(([name, { id }]) => [name, id]);
+
+    return {
+      sortedCategories: sorted,
+      categoryEntries: entries,
+      menusByCategoryId: groupedMenus,
+    };
+  }, [menus]);
+
+  const visibleCategoryEntries = useMemo(
+    () => categoryEntries.slice(0, renderedCategoryCount),
+    [categoryEntries, renderedCategoryCount]
+  );
 
   useEffect(() => {
     if (!token || !tableId) {
@@ -97,91 +83,152 @@ export default function MenuList() {
     }
 
     const validateToken = async () => {
-      try {
-        const res = await axios.post(
-          `${apiUrl}/api/v1/orders`,
-          {
-            tableId: Number(tableId), // body에 tableId 포함
-          },
-          {
-            withCredentials: true,
-            headers: {
-              token: token,
-              tableid: String(tableId), // Header는 문자열로 넣는 게 안전
-            },
-          }
-        );
+      const isSessionValid = await validateOrderSession({ tableId, token });
 
-        if (res.status === 200) {
-          setIsValidToken(true);
-        }
-      } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response) {
-          const status = error.response?.status;
-
-          switch (status) {
-            case 501:
-              setIsValidToken(true);
-              break;
-
-            default:
-              router.replace("/order/expiration");
-              break;
-          }
-        } else {
-          console.error("Unexpected error", error);
-        }
+      if (isSessionValid) {
+        setIsValidToken(true);
+      } else {
+        router.replace("/order/expiration");
       }
     };
 
-    validateToken();
-  }, [token, tableId, router]);
+    void validateToken();
+  }, [router, tableId, token]);
 
-  const scrollToCategory = (categoryId: number) => {
+  useEffect(() => {
+    if (isLoading || !isValidToken) {
+      return;
+    }
+
+    setRenderedCategoryCount(
+      Math.min(INITIAL_CATEGORY_RENDER_COUNT, categoryEntries.length)
+    );
+  }, [categoryEntries.length, isLoading, isValidToken]);
+
+  useEffect(() => {
+    if (isLoading || !isValidToken) {
+      return;
+    }
+
+    if (renderedCategoryCount >= categoryEntries.length) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setRenderedCategoryCount((prev) =>
+        Math.min(prev + CATEGORY_RENDER_BATCH_SIZE, categoryEntries.length)
+      );
+    }, CATEGORY_RENDER_INTERVAL_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [categoryEntries.length, isLoading, isValidToken, renderedCategoryCount]);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      isValidToken &&
+      menus.length > 0 &&
+      activeCategory === null &&
+      sortedCategories.length > 0
+    ) {
+      setActiveCategory(sortedCategories[0][1].id);
+    }
+  }, [activeCategory, isLoading, isValidToken, menus.length, sortedCategories]);
+
+  const performScrollToCategory = useCallback((categoryId: number) => {
     const targetElement = categoryRefs.current[categoryId];
     const buttonElement = buttonRefs.current[categoryId];
     const stickyHeader = document.querySelector(".sticky-header");
 
-    if (targetElement) {
-      const headerHeight = stickyHeader ? stickyHeader.clientHeight : 80;
-      const offset =
-        targetElement.getBoundingClientRect().top +
-        window.scrollY -
-        headerHeight;
-
-      skipObserverRef.current = true;
-      setTimeout(() => {
-        skipObserverRef.current = false;
-      }, 300);
-
-      window.scrollTo({ top: offset, behavior: "smooth" });
-      setActiveCategory(categoryId);
-
-      // 직접 스크롤로 버튼 영역 옮기기 (scrollLeft 계산 방식)
-      if (buttonElement?.offsetLeft !== undefined) {
-        buttonElement.parentElement?.scrollTo({
-          left: buttonElement.offsetLeft - 8, // 여유 padding
-          behavior: "smooth",
-        });
-      }
+    if (!targetElement) {
+      return;
     }
-  };
+
+    const headerHeight = stickyHeader ? stickyHeader.clientHeight : 80;
+    const offset = targetElement.getBoundingClientRect().top + window.scrollY - headerHeight;
+
+    window.scrollTo({ top: offset, behavior: "smooth" });
+    setActiveCategory(categoryId);
+
+    if (buttonElement?.offsetLeft !== undefined) {
+      buttonElement.parentElement?.scrollTo({
+        left: buttonElement.offsetLeft - 8,
+        behavior: "smooth",
+      });
+    }
+  }, []);
+
+  const scrollToCategory = useCallback(
+    (categoryId: number) => {
+      const targetIndex = categoryEntries.findIndex(([, id]) => id === categoryId);
+
+      if (targetIndex > -1 && targetIndex + 1 > renderedCategoryCount) {
+        pendingScrollCategoryRef.current = categoryId;
+        setRenderedCategoryCount((prev) => Math.max(prev, targetIndex + 1));
+        setActiveCategory(categoryId);
+        return;
+      }
+
+      performScrollToCategory(categoryId);
+    },
+    [categoryEntries, performScrollToCategory, renderedCategoryCount]
+  );
+
+  const handleCategoryButtonClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const categoryId = Number(event.currentTarget.dataset.categoryId);
+
+      if (Number.isNaN(categoryId)) {
+        return;
+      }
+
+      scrollToCategory(categoryId);
+    },
+    [scrollToCategory]
+  );
+
+  const handleMenuCardClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const menuId = event.currentTarget.dataset.menuId;
+
+      if (!menuId || !tableId || !token) {
+        return;
+      }
+
+      router.push(`/order/${menuId}?tableId=${tableId}&token=${token}`);
+    },
+    [router, tableId, token]
+  );
+
+  const handleRetry = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  useEffect(() => {
+    const pendingCategoryId = pendingScrollCategoryRef.current;
+
+    if (pendingCategoryId === null || !categoryRefs.current[pendingCategoryId]) {
+      return;
+    }
+
+    pendingScrollCategoryRef.current = null;
+    requestAnimationFrame(() => {
+      performScrollToCategory(pendingCategoryId);
+    });
+  }, [performScrollToCategory, renderedCategoryCount]);
 
   useEffect(() => {
     const handleScroll = () => {
-      const headerHeight =
-        document.querySelector(".sticky-header")?.clientHeight || 80;
+      const headerHeight = document.querySelector(".sticky-header")?.clientHeight || 80;
       const scrollTop = window.scrollY + headerHeight + 1;
 
       let currentCategory: number | null = null;
 
       for (const [, { id }] of sortedCategories) {
-        const el = categoryRefs.current[id];
-        if (el) {
-          const top = el.offsetTop;
-          if (scrollTop >= top) {
-            currentCategory = id;
-          }
+        const element = categoryRefs.current[id];
+
+        if (element && scrollTop >= element.offsetTop) {
+          currentCategory = id;
         }
       }
 
@@ -202,52 +249,28 @@ export default function MenuList() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [activeCategory, sortedCategories]);
 
-  const isStillLoading = isLoading || showSkeleton || !isValidToken;
-
-  // const isStillLoading = isLoading || showSkeleton;
+  const isStillLoading = isLoading || !isValidToken;
 
   return (
     <div>
-      {isError && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[110]">
-          <div className="bg-white rounded-xl p-6 w-[90vw] max-w-md shadow-xl text-center space-y-4">
-            <h2 className="text-lg font-bold text-[#2a2a2a]">
-              데이터 로드 실패
-            </h2>
-            <p className="text-sm text-[#666]">
-              문제가 발생했습니다.
-              <br />
-              새로고침 후 다시 시도해주세요.
-            </p>
-            <button
-              className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
-              onClick={() => window.location.reload()}
-            >
-              새로고침
-            </button>
-          </div>
-        </div>
-      )}
-      {isStillLoading && (
-        <div className="fixed inset-0 w-[100vw] h-[100vh] flex top-[45%] justify-center z-[100] bg-white/50">
-          <span className="loader"></span>
-        </div>
-      )}
+      {isError && <MenuListErrorOverlay onRetry={handleRetry} />}
+      {isStillLoading && <MenuListLoadingOverlay />}
 
-      <div className="category sticky top-0 z-0 bg-white h-[80px] sticky-header p-4">
-        {isStillLoading ? (
-          ""
-        ) : (
+      <div className="category sticky top-0 z-0 bg-white h-20 sticky-header p-4">
+        {isStillLoading ? null : (
           <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide snap-x snap-mandatory scroll-smooth">
-            {Object.entries(Category).map(([name, id]) => (
+            {categoryEntries.map(([name, id]) => (
               <button
                 key={id}
-                ref={(el) => void (buttonRefs.current[id] = el)}
-                onClick={() => scrollToCategory(id)}
+                ref={(element) => {
+                  buttonRefs.current[id] = element;
+                }}
+                data-category-id={id}
+                onClick={handleCategoryButtonClick}
                 className={`px-4 py-2 text-sm font-bold rounded-[999px] w-fit snap-start ${
                   activeCategory === id
                     ? "bg-blue-700 text-white"
-                    : "bg-white text-[#2a2a2a] border-1 border-[#f0f0f0]"
+                    : "bg-white text-[#2a2a2a] border border-[#f0f0f0]"
                 }`}
               >
                 {name}
@@ -257,18 +280,16 @@ export default function MenuList() {
         )}
       </div>
 
-      {/* 메뉴 리스트 */}
       <div className="space-y-8 pt-4">
         {isStillLoading
-          ? // 🔹 하드코딩된 스켈레톤 UI
-            [1, 2].map((cat) => (
-              <div key={`skeleton-category-${cat}`}>
+          ? [1, 2].map((category) => (
+              <div key={`skeleton-category-${category}`}>
                 <div className="px-4 pb-2">
                   <div className="h-6 w-32 bg-gray-200 rounded-md animate-pulse" />
                 </div>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={`skeleton-menu-${cat}-${i}`}>
+                  {[1, 2, 3].map((index) => (
+                    <div key={`skeleton-menu-${category}-${index}`}>
                       <div className="p-6 bg-white flex justify-between items-start animate-pulse">
                         <div className="space-y-2">
                           <div className="h-5 w-40 bg-gray-200 rounded" />
@@ -276,39 +297,37 @@ export default function MenuList() {
                         </div>
                         <div className="w-[140px] h-[100px] rounded-[10px] bg-gray-200" />
                       </div>
-                      <div className="bg-[#F0F0F0] h-[2px]" />
+                      <div className="bg-[#F0F0F0] h-0.5" />
                     </div>
                   ))}
                 </div>
               </div>
             ))
-          : Object.entries(Category).map(([name, id]) => {
-              const menus = Menu.filter((m) => m.categoryId === id && m.onSale);
+          : visibleCategoryEntries.map(([name, id]) => {
+              const categoryMenus = menusByCategoryId[id] ?? [];
+
               return (
                 <div key={id}>
                   <div
-                    ref={(el) => void (categoryRefs.current[id] = el)}
+                    ref={(element) => {
+                      categoryRefs.current[id] = element;
+                    }}
                     className="px-4 pb-2"
                   >
                     <h2 className="text-xl font-bold">{name}</h2>
                   </div>
                   <div className="space-y-4">
-                    {menus.map((menu) => (
+                    {categoryMenus.map((menu) => (
                       <div
                         key={menu.menuId}
-                        onClick={() =>
-                          router.push(
-                            `/order/${menu.menuId}?tableId=${tableId}&token=${token}`
-                          )
-                        }
+                        data-menu-id={menu.menuId}
+                        onClick={handleMenuCardClick}
                       >
                         <div className="p-6 bg-white flex items-start gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold break-words">
-                              {menu.menuName}
-                            </h3>
+                            <h3 className="text-lg font-bold break-words">{menu.menuName}</h3>
                             <p className="text-sm font-semibold mt-2">
-                              {menu.menuPrice?.toLocaleString()}원
+                              {menu.menuPrice?.toLocaleString()} 원
                             </p>
                           </div>
                           <div className="w-[140px] h-[100px] rounded-[10px] overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -318,16 +337,21 @@ export default function MenuList() {
                               width={140}
                               height={100}
                               className="w-full h-full object-cover"
+                              sizes="(max-width: 768px) 140px, 140px"
                             />
                           </div>
                         </div>
-                        <div className="bg-[#F0F0F0] h-[2px]" />
+                        <div className="bg-[#F0F0F0] h-0.5" />
                       </div>
                     ))}
                   </div>
                 </div>
               );
             })}
+
+        {!isStillLoading && renderedCategoryCount < categoryEntries.length && (
+          <MenuListLoadMoreMessage />
+        )}
       </div>
     </div>
   );
