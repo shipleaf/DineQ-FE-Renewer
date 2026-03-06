@@ -1,12 +1,30 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useCartStore } from "@/store/cartStore";
-import Cart from "./Cart";
+
+type CartComponentProps = {
+  setIsBottomSheet: (value: boolean) => void;
+};
+
+const Cart = dynamic<CartComponentProps>(() => import("./Cart"), {
+  loading: () => (
+    <div className="h-dvh w-full flex items-center justify-center text-[#666] text-sm font-semibold">
+      장바구니 불러오는 중...
+    </div>
+  ),
+});
 
 export default function FooterButton() {
   const [isBottomSheet, setIsBottomSheet] = useState(false);
+  const [hasOpenedCart, setHasOpenedCart] = useState(false);
   const cartCount = useCartStore((state) => state.items.length);
+
+  const handleOpenCart = () => {
+    setHasOpenedCart(true);
+    setIsBottomSheet(true);
+  };
 
   useEffect(() => {
     if (isBottomSheet) {
@@ -25,7 +43,7 @@ export default function FooterButton() {
     <div className="fixed bottom-4 w-full flex justify-between items-center px-6">
       <button
         className="bg-[#35CAF4] w-full py-3 text-white font-[700] text-lg rounded-[10px] flex items-center justify-center gap-2"
-        onClick={() => setIsBottomSheet(true)}
+        onClick={handleOpenCart}
       >
         <span>장바구니</span>
         {cartCount >= 1 && (
@@ -39,7 +57,7 @@ export default function FooterButton() {
           isBottomSheet ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <Cart setIsBottomSheet={setIsBottomSheet} />
+        {hasOpenedCart ? <Cart setIsBottomSheet={setIsBottomSheet} /> : null}
       </div>
     </div>
   );
