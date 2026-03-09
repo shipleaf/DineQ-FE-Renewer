@@ -5,7 +5,7 @@ name: DineQ Frontend
 on:
   push:
     branches:
-      - main
+      - develop
 
 # 권한
 permissions:
