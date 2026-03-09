@@ -9,27 +9,25 @@ on:
 
 # 권한
 permissions:
-	# 레포 코드 읽기
+# 레포 코드 읽기
   contents: read
-  # GHCR Push 권한
+# GHCR Push 권한
   packages: write
 
 # 전체 workflow에서 사용할 env 변수
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/dineq-test-frontend
 
-
 jobs:
   build-and-deploy:
-	  # Github가 제공하는 가상머신 설정
+# Github가 제공하는 가상머신 설정
     runs-on: ubuntu-latest
-		
-		# jobs 안에서 실행할 순서
+# jobs 안에서 실행할 순서
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 				
-				# buildx가 캐시 지원
+# buildx가 캐시 지원
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
