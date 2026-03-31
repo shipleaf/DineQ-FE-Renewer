@@ -10,22 +10,22 @@ export default function Header() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
   const router = useRouter();
-  // const token = searchParams.get("token");
+  const token = searchParams.get("token");
 
-  const [token, setToken] = useState<string | null>(null);
+  // const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    const getToken = async () => {
-      try {
-        const response = await fetchToken();
-        setToken(response.data.qrToken); // 응답 구조에 맞게 수정
-      } catch (error) {
-        console.log("❌ fetchToken error:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const getToken = async () => {
+  //     try {
+  //       const response = await fetchToken();
+  //       setToken(response.data.qrToken); // 응답 구조에 맞게 수정
+  //     } catch (error) {
+  //       console.log("❌ fetchToken error:", error);
+  //     }
+  //   };
 
-    getToken();
-  }, []);
+  //   getToken();
+  // }, []);
 
   return (
     <div className="flex flex-col">
