@@ -14,3 +14,8 @@ export type Menu = {
 export type CategoryEntry = readonly [string, number];
 
 export type MenusByCategoryId = Record<number, Menu[]>;
+
+export type MenuListContentProps = {
+  tableId: string;
+  token: string;
+};
