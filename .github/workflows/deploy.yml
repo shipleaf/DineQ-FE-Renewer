@@ -57,6 +57,7 @@ jobs:
           build-args: | 
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_WS_WSS=${{ secrets.NEXT_PUBLIC_WS_WSS }}
+            NEXT_STANDALONE=${{ secrets.NEXT_STANDALONE }}
 
       - name: Deploy to mini PC
         uses: appleboy/ssh-action@v1.2.0
