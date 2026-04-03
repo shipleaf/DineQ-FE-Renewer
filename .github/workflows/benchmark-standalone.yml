@@ -1,0 +1,106 @@
+name: Benchmark Frontend Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/dineq-test-frontend-benchmark
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: standalone
+            dockerfile: ./Dockerfile
+            next_standalone: "true"
+            image_tag: standalone
+          - mode: normal
+            dockerfile: ./Dockerfile.normal
+            next_standalone: "false"
+            image_tag: normal
+        run_number: [1, 2, 3]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Clean previous build
+        run: rm -rf .next
+
+      - name: Measure Next build time
+        id: next_build
+        env:
+          NEXT_STANDALONE: ${{ matrix.next_standalone }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_WS_WSS: ${{ secrets.NEXT_PUBLIC_WS_WSS }}
+        run: |
+          start=$(date +%s)
+          pnpm build
+          end=$(date +%s)
+          echo "duration=$((end-start))" >> $GITHUB_OUTPUT
+
+      - name: Measure .next size
+        id: next_size
+        run: |
+          size=$(du -sb .next | cut -f1)
+          echo "bytes=$size" >> $GITHUB_OUTPUT
+          echo ".next size:"
+          du -sh .next || true
+          echo ".next/standalone size:"
+          du -sh .next/standalone || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Measure Docker build time
+        id: docker_build
+        run: |
+          start=$(date +%s)
+          docker build \
+            -f ${{ matrix.dockerfile }} \
+            -t ${{ env.IMAGE_NAME }}:${{ matrix.image_tag }} \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_WS_WSS=${{ secrets.NEXT_PUBLIC_WS_WSS }} \
+            .
+          end=$(date +%s)
+          echo "duration=$((end-start))" >> $GITHUB_OUTPUT
+
+      - name: Measure Docker image size
+        id: image_size
+        run: |
+          size=$(docker image inspect ${{ env.IMAGE_NAME }}:${{ matrix.image_tag }} --format='{{.Size}}')
+          echo "bytes=$size" >> $GITHUB_OUTPUT
+          docker image ls ${{ env.IMAGE_NAME }}:${{ matrix.image_tag }}
+
+      - name: Write summary
+        run: |
+          echo "## ${{
+            matrix.mode
+          }} benchmark" >> $GITHUB_STEP_SUMMARY
+          echo "- NEXT_STANDALONE: ${{ matrix.next_standalone }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Next build time: ${{ steps.next_build.outputs.duration }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- .next size: ${{ steps.next_size.outputs.bytes }} bytes" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker build time: ${{ steps.docker_build.outputs.duration }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker image size: ${{ steps.image_size.outputs.bytes }} bytes" >> $GITHUB_STEP_SUMMARY
