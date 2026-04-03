@@ -95,6 +95,7 @@ jobs:
             -t ${{ env.IMAGE_NAME }}:${{ matrix.image_tag }} \
             --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
             --build-arg NEXT_PUBLIC_WS_WSS=${{ secrets.NEXT_PUBLIC_WS_WSS }} \
+            --build-arg NEXT_STANDALONE=${{ matrix.next_standalone }} \
             .
           end=$(date +%s)
           echo "duration=$((end-start))" >> $GITHUB_OUTPUT
