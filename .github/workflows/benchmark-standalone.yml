@@ -17,6 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        mode: [standalone, normal]
+        run_number: [1, 2, 3]
         include:
           - mode: standalone
             dockerfile: ./Dockerfile
@@ -26,7 +28,6 @@ jobs:
             dockerfile: ./Dockerfile.normal
             next_standalone: "false"
             image_tag: normal
-        run_number: [1, 2, 3]
 
     steps:
       - name: Checkout
