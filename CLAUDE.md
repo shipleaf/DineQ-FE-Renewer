@@ -18,7 +18,7 @@
 | 스타일 | Tailwind CSS | 4 |
 | 날짜 처리 | date-fns | 4.1.0 |
 | 아이콘 | react-icons | 5.5.0 |
-
+| 의존성 관리 | pnpm | - |
 ---
 
 ## 디렉토리 구조
