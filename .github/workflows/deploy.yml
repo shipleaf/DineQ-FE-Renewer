@@ -19,7 +19,19 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/dineq-test-frontend
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      
   build-and-deploy:
+    needs: test
 # Github가 제공하는 가상머신 설정
     runs-on: ubuntu-latest
 # jobs 안에서 실행할 순서
