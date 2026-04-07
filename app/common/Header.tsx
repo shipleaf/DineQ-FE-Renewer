@@ -10,7 +10,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
   const router = useRouter();
-  
+
   // 허위 주문을 방지하기 위한 토큰
   const [token, setToken] = useState<string | null>(null);
 
