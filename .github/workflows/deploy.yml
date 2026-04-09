@@ -6,6 +6,11 @@ on:
   push:
     branches:
       - develop
+    paths-ignore:
+      - "tests/**"
+      - "playwright.config.ts"
+      - "playwright-report/**"
+      - "test-results/**"
 
 # 권한
 permissions:
