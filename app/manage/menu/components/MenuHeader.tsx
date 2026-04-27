@@ -17,6 +17,7 @@ import {
 import { FiMenu } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { logout } from "@/app/api/useLoginAPI";
+import { resizeImageFile } from "@/app/utils/resizeImageFile";
 type Category = {
   categoryId: number;
   categoryName: string;
@@ -55,6 +56,7 @@ export default function MenuHeader() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [isResizingImage, setIsResizingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [menuSortCategoryId, setMenuSortCategoryId] = useState<number | "">("");
   const [menuList, setMenuList] = useState<Menu[]>([]);
@@ -65,6 +67,12 @@ export default function MenuHeader() {
   const [showConfirmCategoryModal, setShowConfirmCategoryModal] =
     useState(false);
   const logoutRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+    };
+  }, [previewImageUrl]);
 
   function moveMenuItem(index: number, direction: "up" | "down") {
     setMenuList((prev) => {
@@ -161,6 +169,7 @@ export default function MenuHeader() {
       setShowErrorModal(true);
       return;
     }
+    if (isResizingImage) return;
 
     try {
       await submitNewMenu(
@@ -406,9 +415,10 @@ export default function MenuHeader() {
               <div className="flex items-center gap-4">
                 <button
                   className="bg-blue-600 text-white px-4 py-2 rounded"
+                  disabled={isResizingImage}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  사진 업로드
+                  {isResizingImage ? "처리 중..." : "사진 업로드"}
                 </button>
 
                 {/* 미리보기 + 삭제 버튼 */}
@@ -438,11 +448,21 @@ export default function MenuHeader() {
                 accept="image/*"
                 ref={fileInputRef}
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    setImageFile(file);
-                    setPreviewImageUrl(URL.createObjectURL(file));
+                    setIsResizingImage(true);
+                    try {
+                      const resizedFile = await resizeImageFile(file);
+                      setImageFile(resizedFile);
+                      setPreviewImageUrl(URL.createObjectURL(resizedFile));
+                    } catch (error) {
+                      console.error("이미지 리사이즈 실패", error);
+                      setImageFile(file);
+                      setPreviewImageUrl(URL.createObjectURL(file));
+                    } finally {
+                      setIsResizingImage(false);
+                    }
                   }
                 }}
               />
@@ -456,10 +476,13 @@ export default function MenuHeader() {
                 취소
               </button>
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className={`text-white px-4 py-2 rounded ${
+                  isResizingImage ? "bg-blue-300" : "bg-blue-500"
+                }`}
+                disabled={isResizingImage}
                 onClick={handleSubmitNewMenu}
               >
-                등록
+                {isResizingImage ? "이미지 처리 중..." : "등록"}
               </button>
             </div>
           </div>

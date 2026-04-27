@@ -10,6 +10,7 @@ import {
   submitMenuUpdate,
   updateMenuStatus,
 } from "@/app/api/fetchForManagerAPI";
+import { resizeImageFile } from "@/app/utils/resizeImageFile";
 
 export default function ManagedMenuImage() {
   const { menuId } = useParams();
@@ -19,6 +20,7 @@ export default function ManagedMenuImage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [isResizingImage, setIsResizingImage] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<{
     open: boolean;
     success: boolean;
@@ -33,11 +35,22 @@ export default function ManagedMenuImage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 2. 이미지 선택 핸들러
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSelectedImage(file);
-    setPreviewImageUrl(URL.createObjectURL(file)); // 즉시 반영
+
+    setIsResizingImage(true);
+    try {
+      const resizedFile = await resizeImageFile(file);
+      setSelectedImage(resizedFile);
+      setPreviewImageUrl(URL.createObjectURL(resizedFile)); // 즉시 반영
+    } catch (error) {
+      console.error("이미지 리사이즈 실패", error);
+      setSelectedImage(file);
+      setPreviewImageUrl(URL.createObjectURL(file));
+    } finally {
+      setIsResizingImage(false);
+    }
   };
 
   const {
@@ -56,6 +69,12 @@ export default function ManagedMenuImage() {
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+    };
+  }, [previewImageUrl]);
 
   const [name, setName] = useState("");
   const [info, setInfo] = useState("");
@@ -113,9 +132,10 @@ export default function ManagedMenuImage() {
 
         <button
           className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded text-sm"
+          disabled={isResizingImage}
           onClick={() => fileInputRef.current?.click()}
         >
-          사진 변경
+          {isResizingImage ? "처리 중..." : "사진 변경"}
         </button>
       </div>
 
@@ -174,16 +194,21 @@ export default function ManagedMenuImage() {
               setName(menu.menuName);
               setInfo(menu.menuInfo);
               setPrice(menu.menuPrice);
+              setSelectedImage(null);
+              setPreviewImageUrl(null);
               setHasChanged(false);
             }}
           >
             취소
           </button>
           <button
-            className="px-4 py-2 rounded w-[66%] bg-blue-600 text-white"
+            className={`px-4 py-2 rounded w-[66%] text-white ${
+              isResizingImage ? "bg-blue-300" : "bg-blue-600"
+            }`}
+            disabled={isResizingImage}
             onClick={() => setConfirmModalOpen(true)}
           >
-            변경하기
+            {isResizingImage ? "이미지 처리 중..." : "변경하기"}
           </button>
         </div>
       )}
