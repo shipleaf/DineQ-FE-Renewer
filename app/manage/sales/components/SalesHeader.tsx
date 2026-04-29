@@ -4,7 +4,7 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaRegUserCircle } from "react-icons/fa";
-import { logout } from "@/app/api/useLoginAPI";
+import { logout } from "@/app/api/auth/auth.api";
 
 export default function SalesHeader() {
   const logoutRef = useRef<HTMLDivElement>(null);

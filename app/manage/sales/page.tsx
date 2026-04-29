@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
   fetchSalesHistory,
   fetchTotalSales,
-} from "@/app/api/fetchForManagerAPI"; // fetch 함수 위치에 맞게 수정
+} from "@/app/api/report/report.api";
 import SalesHeader from "./components/SalesHeader";
 
 type SalesItem = {

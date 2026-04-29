@@ -7,7 +7,7 @@ import { FaMinus } from "react-icons/fa6";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMenuById } from "@/app/api/fetchMenuAPI";
+import { fetchMenuById } from "@/app/api/menu/menu.api";
 
 export default function MenuImage() {
   const { menuId } = useParams();

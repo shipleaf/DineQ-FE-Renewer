@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
-import { createOrders } from "@/app/api/fetchOrderAPI";
+import { createOrders } from "@/app/api/order/order.api";
 
 type UseOrderSubmitParams = {
   onSuccessClose: () => void;

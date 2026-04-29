@@ -3,10 +3,10 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
+import { fetchAllMenus } from "@/app/api/menu/menu.api";
 import { useQuery } from "@tanstack/react-query";
 import { FaPencilAlt } from "react-icons/fa";
-import { updateCategoryName } from "@/app/api/fetchForManagerAPI";
+import { updateCategoryName } from "@/app/api/category/category.api";
 
 type Menu = {
   categoryId: number;

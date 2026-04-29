@@ -4,7 +4,7 @@ import {
   deleteAllOrders,
   fetchOrdersInProgress,
   putOrdersToCooking,
-} from "@/app/api/fetchForManagerAPI";
+} from "@/app/api/order/order.api";
 import { useOrderStatusStore } from "@/store/manageStore";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

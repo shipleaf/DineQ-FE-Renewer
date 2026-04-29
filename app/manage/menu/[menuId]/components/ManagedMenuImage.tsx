@@ -4,12 +4,12 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMenuById } from "@/app/api/fetchMenuAPI";
 import {
+  fetchMenuById,
   deleteMenu,
   submitMenuUpdate,
   updateMenuStatus,
-} from "@/app/api/fetchForManagerAPI";
+} from "@/app/api/menu/menu.api";
 import { resizeImageFile } from "@/app/utils/resizeImageFile";
 
 export default function ManagedMenuImage() {

@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  createNewCategory,
-  fetchCatergories,
+  fetchCategories,
   submitCategorySort,
-  submitNewMenu,
-  updateMenuPriority,
-} from "@/app/api/fetchForManagerAPI";
+  createNewCategory,
+} from "@/app/api/category/category.api";
+import { submitNewMenu, updateMenuPriority } from "@/app/api/menu/menu.api";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { FaRegUserCircle } from "react-icons/fa";
@@ -16,7 +15,7 @@ import {
 } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import { logout } from "@/app/api/useLoginAPI";
+import { logout } from "@/app/api/auth/auth.api";
 import { resizeImageFile } from "@/app/utils/resizeImageFile";
 type Category = {
   categoryId: number;
@@ -116,7 +115,7 @@ export default function MenuHeader() {
     if (activeModal === "category-sort" || "menu-add") {
       const loadCategories = async () => {
         try {
-          const data = await fetchCatergories();
+          const data = await fetchCategories();
           const sorted = [...data].sort(
             (a, b) => a.categoryPriority - b.categoryPriority
           );
