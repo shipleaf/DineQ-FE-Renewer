@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSuspenseQueries } from "@tanstack/react-query";
-import { fetchAllMenus } from "@/app/api/fetchMenuAPI";
-import { validateOrderSession } from "@/app/api/validateOrderSessionAPI";
+import { fetchAllMenus } from "@/app/api/menu/menu.api";
+import { validateOrderSession } from "@/app/api/auth/auth.api";
 import type { CategoryEntry, MenusByCategoryId } from "@/app/type/menu/menu";
 
 type UseMenuDataReturn = {

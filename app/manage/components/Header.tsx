@@ -10,13 +10,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react"; // 추가
 import {
   addTable,
-  checkLoginState,
   deleteTable,
   fetchTableOrders,
   getTableNumber,
   payingTableOrders,
-} from "@/app/api/fetchForManagerAPI";
-import { logout } from "@/app/api/useLoginAPI";
+} from "@/app/api/table/table.api";
+import { checkLoginState, logout } from "@/app/api/auth/auth.api";
 
 type OrderItem = {
   menuName: string;

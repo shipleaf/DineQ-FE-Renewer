@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchOrderHistory } from "@/app/api/fetchOrderAPI";
+import { fetchOrderHistory } from "@/app/api/order/order.api";
 import React from "react";
 import { AxiosError } from "axios";
 
